@@ -1343,6 +1343,10 @@ async function dislikeMeal(mealId, dayNum) {
     portions.style.display = 'flex';
     gen.classList.remove('active');
     card.classList.add('replaced');
+card.querySelector('.meal-name').textContent = newMeal.name;
+const portions = card.querySelector('.portions');
+portions.innerHTML = `<div class="portion her"><span class="portion-who">👩 Альона</span><span class="portion-text">${newMeal.her}</span></div><div class="portion him"><span class="portion-who">👨 Діма</span><span class="portion-text">${newMeal.him}</span></div>`;
+portions.style.display = 'flex';
 
     // Update icon
     card.querySelector('.meal-type').textContent = `${newMeal.icon} ${labelForType(meal.type)}`;
