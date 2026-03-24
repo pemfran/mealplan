@@ -12,7 +12,7 @@ function parseJsonSafe(text) {
   }
 }
 
-export async function generateMenu(payload) {
+export async function generateMenuPlan(payload) {
   let response;
 
   try {
