@@ -1,20 +1,26 @@
-import { callOpenAI } from "./openaiClient.js";
-import { buildReplaceMealPayload } from "./prompts.js";
-import { normalizeMeal } from "../core/normalize.js";
+import { CONFIG } from '../config.js';
 
-export async function replaceMeal(input) {
-  const payload = buildReplaceMealPayload(input);
+export async function replaceMealWithAI(payload) {
+  try {
+    const res = await fetch(CONFIG.REPLACE_MEAL_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: CONFIG.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${CONFIG.SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-  const parsed = await callOpenAI({
-    action: "replace_meal",
-    payload,
-  });
+    const data = await res.json();
 
-  return normalizeMeal(parsed, payload.meal_id);
-} catch (error) {
-      lastError = error;
+    if (!res.ok) {
+      throw new Error(data?.error || 'Failed to replace meal.');
     }
-  }
 
-  throw lastError || new Error('Failed to replace meal');
+    return data;
+  } catch (error) {
+    console.error('replaceMealWithAI error:', error);
+    throw error;
+  }
 }
