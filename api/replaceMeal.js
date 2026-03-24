@@ -1,7 +1,6 @@
-import { callOpenAI } from './openaiClient.js';
-import { buildReplaceMealUserPrompt, buildSystemPrompt } from './prompts.js';
-import { normalizeMeal } from './normalize.js';
-import { validateMeal } from './validate.js';
+import { callOpenAI } from "./openaiClient.js"
+import { replacePrompt } from "./prompts.js"
+import { normalizeMeal } from "../normalize.js"
 
 export async function replaceMealWithAI({ mealId, mealType, dayIndex, params, existingDayMeals, allMealNames }) {
   const systemPrompt = buildSystemPrompt();
