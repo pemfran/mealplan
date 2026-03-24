@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>План харчування · Альона та Діма</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F5F1EB;
+      --card: #FFFFFF;
+      --green: #2E5E42;
+      --green-mid: #4A8060;
+      --green-pale: #EBF3EE;
+      --green-line: #C4D9CC;
+      --amber: #C07830;
+      --amber-pale: #FDF4E8;
+      --amber-line: #E8C898;
+      --her: #6030A0;
+      --her-pale: #F3EEFB;
+      --her-line: #CFC0EC;
+      --him: #1858A0;
+      --him-pale: #EBF3FD;
+      --him-line: #B8D4F0;
+      --red: #B03040;
+      --red-pale: #FCEEF0;
+      --red-line: #ECC0C8;
+      --border: #E4DED6;
+      --text: #1A1A18;
+      --soft: #58584E;
+      --muted: #96968A;
+      --shadow: 0 2px 12px rgba(0,0,0,0.07);
+      --shadow-lg: 0 6px 32px rgba(0,0,0,0.10);
+      --header-h: 138px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    #setup-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .setup-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 28px 20px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+
+    .setup-card h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      color: var(--green);
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .setup-desc {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .setup-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .who-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .who-btn {
+      padding: 16px 12px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      background: var(--card);
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.18s, background 0.18s, transform 0.1s;
+    }
+
+    .who-btn:hover {
+      border-color: var(--green-line);
+      background: var(--green-pale);
+    }
+
+    .who-btn:active {
+      transform: scale(0.98);
+    }
+
+    .who-btn.selected.her {
+      border-color: var(--her);
+      background: var(--her-pale);
+    }
+
+    .who-btn.selected.him {
+      border-color: var(--him);
+      background: var(--him-pale);
+    }
+
+    .who-emoji {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .who-name {
+      font-size: 14px;
+      font-weight: 700;
+      display: block;
+    }
+
+    .who-meta {
+      font-size: 11px;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    .setup-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.1s;
+    }
+
+    .setup-btn:hover:not(:disabled) {
+      background: #234A34;
+    }
+
+    .setup-btn:active {
+      transform: scale(0.98);
+    }
+
+    .setup-btn:disabled {
+      background: var(--border);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    #app {
+      display: none;
+    }
+
+    header {
+      background: var(--green);
+      color: #fff;
+      padding: 14px 14px 12px;
+      position: sticky;
+      top: 0;
+      z-index: 120;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    .hdr-row1 {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .hdr-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .hdr-btns {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hdr-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .hdr-btn:hover {
+      background: rgba(255,255,255,0.26);
+    }
+
+    .hdr-btn:active {
+      transform: scale(0.98);
+    }
+
+    .hdr-meta {
+      font-size: 12px;
+      opacity: 0.82;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .hdr-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .hdr-chip {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .tabs-bar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      position: sticky;
+      top: var(--header-h);
+      z-index: 110;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      padding: 0 10px;
+    }
+
+    .tabs-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-btn {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 13px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab-btn:hover {
+      color: var(--green);
+    }
+
+    .tab-btn.active {
+      color: var(--green);
+      border-bottom-color: var(--green);
+      font-weight: 700;
+    }
+
+    main {
+      padding: 16px 12px 80px;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .day-hdr {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .day-label {
+      font-size: 12px;
+      font-style: italic;
+      color: var(--green-mid);
+    }
+
+    .day-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .prep-box {
+      display: flex;
+      gap: 10px;
+      background: var(--amber-pale);
+      border: 1px solid var(--amber-line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #6A4010;
+      line-height: 1.5;
+    }
+
+    .prep-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .meals-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 760px) {
+      .meals-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .meal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.14s, box-shadow 0.14s;
+    }
+
+    .meal-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.10);
+    }
+
+    .meal-card.replaced {
+      border-color: var(--green-line);
+    }
+
+    .meal-card.snack-card {
+      background: var(--green-pale);
+      border-color: var(--green-line);
+    }
+
+    .meal-bar {
+      height: 4px;
+    }
+
+    .meal-bar.breakfast { background: #E8A840; }
+    .meal-bar.lunch { background: var(--green-mid); }
+    .meal-bar.lunch_2 { background: var(--him); }
+    .meal-bar.snack { background: #70A040; }
+    .meal-bar.dinner { background: #8040A0; }
+
+    .meal-head {
+      padding: 14px 14px 8px;
+    }
+
+    .meal-type-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .meal-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .portions {
+      padding: 8px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .portion {
+      border-radius: 10px;
+      padding: 9px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .portion.her {
+      background: var(--her-pale);
+      border: 1px solid var(--her-line);
+    }
+
+    .portion.him {
+      background: var(--him-pale);
+      border: 1px solid var(--him-line);
+    }
+
+    .p-who {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .portion.her .p-who { color: var(--her); }
+    .portion.him .p-who { color: var(--him); }
+
+    .p-text {
+      font-size: 13px;
+      color: var(--soft);
+      line-height: 1.5;
+    }
+
+    .generating {
+      padding: 22px 16px;
+      text-align: center;
+      display: none;
+    }
+
+    .generating.active {
+      display: block;
+    }
+
+    .gen-spin {
+      width: 24px;
+      height: 24px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 9px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .gen-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .meal-foot {
+      padding: 10px 14px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+      flex-wrap: wrap;
+    }
+
+    .dislike-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.16s;
+    }
+
+    .dislike-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: var(--red-pale);
+    }
+
+    .dislike-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .replaced-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+      background: var(--green-pale);
+      border-radius: 999px;
+      padding: 4px 9px;
+      display: none;
+    }
+
+    .meal-card.replaced .replaced-badge {
+      display: inline-block;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .meal-card.replaced .meal-head,
+    .meal-card.replaced .portions {
+      animation: fadeInUp 0.3s ease;
+    }
+
+    .kbjv-wrap {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      background: var(--card);
+    }
+
+    .kbjv-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .kbjv-table {
+      min-width: 560px;
+    }
+
+    .kbjv-hdr,
+    .kbjv-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 1fr 1fr 1fr;
+      padding: 10px 14px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .kbjv-hdr {
+      background: var(--green);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .kbjv-hdr > :first-child {
+      text-align: left;
+    }
+
+    .kbjv-row {
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      background: var(--card);
+    }
+
+    .kbjv-row:last-child {
+      border-bottom: none;
+    }
+
+    .kbjv-row.her-row { background: var(--her-pale); }
+    .kbjv-row.him-row { background: var(--him-pale); }
+    .kbjv-row.tgt-row { background: var(--amber-pale); font-weight: 700; }
+
+    .kbjv-lbl {
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .kbjv-val {
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .kbjv-val.p { color: var(--him); }
+    .kbjv-val.f { color: var(--green); }
+    .kbjv-val.c { color: var(--amber); }
+
+    .d-ok,
+    .d-over,
+    .d-low {
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 11px;
+      display: inline-block;
+    }
+
+    .d-ok { color: #1C6838; background: #D4EEE0; }
+    .d-over { color: #8A2018; background: #FAE0D8; }
+    .d-low { color: #785000; background: #FFF0B8; }
+
+    .kbjv-foot {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+      padding: 8px 14px;
+      text-align: center;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      line-height: 1.4;
+    }
+
+    #panel-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 499;
+      backdrop-filter: blur(2px);
+    }
+
+    #panel-overlay.active {
+      display: block;
+    }
+
+    #dislikes-panel-wrap {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: min(360px, 92vw);
+      height: 100vh;
+      background: var(--card);
+      border-left: 1px solid var(--border);
+      box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+      z-index: 500;
+      transition: right 0.28s cubic-bezier(0.4,0,0.2,1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #dislikes-panel-wrap.open {
+      right: 0;
+    }
+
+    .dl-hdr {
+      padding: 20px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .dl-hdr-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .dl-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 4px;
+      transition: color 0.14s;
+      line-height: 1;
+    }
+
+    .dl-close:hover {
+      color: var(--text);
+    }
+
+    .dl-hint {
+      padding: 9px 18px;
+      font-size: 12px;
+      color: var(--soft);
+      background: var(--green-pale);
+      border-bottom: 1px solid var(--green-line);
+      line-height: 1.5;
+    }
+
+    #dislikes-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 18px;
+    }
+
+    .dl-empty {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      padding: 28px 0;
+      line-height: 1.5;
+    }
+
+    .dl-group {
+      margin-bottom: 16px;
+    }
+
+    .dl-group-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .dl-item {
+      display: flex;
+      gap: 7px;
+      align-items: flex-start;
+      padding: 7px 10px;
+      background: var(--red-pale);
+      border: 1px solid var(--red-line);
+      border-radius: 8px;
+      margin-bottom: 5px;
+    }
+
+    .dl-type-tag {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--red);
+      background: rgba(176,48,64,0.1);
+      border-radius: 4px;
+      padding: 2px 5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .dl-item-name {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .dl-clear-btn {
+      width: 100%;
+      padding: 10px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      margin-top: 6px;
+      transition: all 0.14s;
+    }
+
+    .dl-clear-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: var(--red-pale);
+    }
+
+    #gen-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 600;
+      overflow-y: auto;
+      padding: 24px 16px 48px;
+    }
+
+    #gen-screen.active {
+      display: block;
+    }
+
+    .gen-inner {
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .gen-screen-hdr {
+      margin-bottom: 20px;
+    }
+
+    .gen-screen-hdr h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 7px;
+      line-height: 1.2;
+    }
+
+    .gen-screen-hdr p {
+      font-size: 14px;
+      color: var(--soft);
+      line-height: 1.6;
+    }
+
+    .gen-card {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 12px;
+    }
+
+    .gen-card-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .gen-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .gen-tag {
+      background: var(--red-pale);
+      border: 1px solid var(--red-line);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--red);
+      font-weight: 500;
+    }
+
+    .gen-empty {
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .gen-checks {
+      display: grid;
+      gap: 10px;
+    }
+
+    .gen-check {
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      cursor: pointer;
+      color: var(--soft);
+      line-height: 1.45;
+    }
+
+    .gen-check input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--green);
+      cursor: pointer;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .gen-go-btn {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 9px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.1s;
+    }
+
+    .gen-go-btn:hover:not(:disabled) {
+      background: #234A34;
+    }
+
+    .gen-go-btn:active {
+      transform: scale(0.98);
+    }
+
+    .gen-go-btn:disabled {
+      background: var(--border);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .gen-cancel-btn {
+      width: 100%;
+      padding: 12px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .gen-cancel-btn:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    .gen-progress {
+      display: none;
+      margin-top: 24px;
+      text-align: center;
+    }
+
+    .gen-progress.active {
+      display: block;
+    }
+
+    .gen-big-spin {
+      width: 42px;
+      height: 42px;
+      border: 3.5px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    .gen-prog-txt {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .gen-prog-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .gen-steps {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .gen-step {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--border);
+      color: var(--muted);
+      transition: all 0.25s;
+    }
+
+    .gen-step.active {
+      background: var(--green-pale);
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .gen-step.done {
+      background: var(--green);
+      color: #fff;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: #181818;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s, transform 0.22s;
+      z-index: 999;
+      max-width: calc(100vw - 24px);
+      white-space: normal;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.28);
+      line-height: 1.4;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --header-h: 164px;
+      }
+
+      .setup-card {
+        padding: 22px 16px;
+        border-radius: 16px;
+      }
+
+      .who-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hdr-title {
+        font-size: 18px;
+      }
+
+      .tabs-bar {
+        top: var(--header-h);
+        padding: 0 8px;
+      }
+
+      .meal-name {
+        font-size: 16px;
+      }
+
+      .meal-head,
+      .portions,
+      .meal-foot {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .dislike-btn,
+      .replaced-badge {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .dl-hdr {
+        padding: 16px 14px 12px;
+      }
+
+      .dl-hint,
+      #dislikes-list {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      :root {
+        --header-h: 178px;
+      }
+
+      header {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      main {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .hdr-btns {
+        gap: 6px;
+      }
+
+      .hdr-btn {
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="setup-screen">
+    <div class="setup-card">
+      <h1>🥗 План харчування</h1>
+      <p class="setup-desc">Альона та Діма · 10 днів · Краків<br>Оберіть хто відкриває — порції адаптуються.</p>
+      <label class="setup-label">Хто ти?</label>
+      <div class="who-grid">
+        <div class="who-btn her" id="btn-her" onclick="selectWho('her')">
+          <span class="who-emoji">👩</span>
+          <span class="who-name">Альона</span>
+          <span class="who-meta">1750 ккал · рекомп.</span>
+        </div>
+        <div class="who-btn him" id="btn-him" onclick="selectWho('him')">
+          <span class="who-emoji">👨</span>
+          <span class="who-name">Діма</span>
+          <span class="who-meta">2450 ккал · рекомп.</span>
+        </div>
+      </div>
+      <button class="setup-btn" id="start-btn" onclick="startApp()" disabled>Відкрити план →</button>
+    </div>
+  </div>
+
+  <div id="app">
+    <header>
+      <div class="hdr-row1">
+        <span class="hdr-title">🥗 План харчування</span>
+        <div class="hdr-btns">
+          <button class="hdr-btn" onclick="toggleDislikesPanel()">
+            👎 Відхилені
+            <span id="dislikes-badge" style="display:none;background:rgba(255,255,255,0.28);border-radius:50px;padding:1px 7px;margin-left:4px;font-size:11px"></span>
+          </button>
+          <button class="hdr-btn" onclick="openGenPlanScreen()">✨ Новий план</button>
+          <button class="hdr-btn" id="hdr-who-btn" onclick="resetWho()">👤 Змінити</button>
+        </div>
+      </div>
+      <div class="hdr-meta" id="hdr-meta"></div>
+      <div class="hdr-chips" id="hdr-chips"></div>
+    </header>
+
+    <div class="tabs-bar" id="tabs-bar"></div>
+    <main id="main-content"></main>
+
+    <div id="panel-overlay" onclick="toggleDislikesPanel()"></div>
+    <div id="dislikes-panel-wrap">
+      <div class="dl-hdr">
+        <span class="dl-hdr-title">👎 Відхилені страви</span>
+        <button class="dl-close" onclick="toggleDislikesPanel()">✕</button>
+      </div>
+      <div class="dl-hint">Ці страви не пропонуватимуться при заміні. Зберігається для обох.</div>
+      <div id="dislikes-list">
+        <div class="dl-empty">Завантаження…</div>
+      </div>
+    </div>
+
+    <div id="gen-screen">
+      <div class="gen-inner">
+        <div class="gen-screen-hdr">
+          <h2>✨ Новий план</h2>
+          <p>AI згенерує новий 7-денний план з урахуванням відхилених страв. Вихідні отримають додатковий сімейний обід.</p>
+        </div>
+
+        <div class="gen-card">
+          <div class="gen-card-lbl">👎 Відхилені страви</div>
+          <div id="gp-dislikes-preview">
+            <div class="gen-empty">Завантаження…</div>
+          </div>
+        </div>
+
+        <div class="gen-card">
+          <div class="gen-card-lbl">⚙️ Параметри</div>
+          <div class="gen-checks" style="margin-top:4px">
+            <label class="gen-check">
+              <input type="checkbox" id="gp-variety" checked>
+              Максимальна різноманітність між днями
+            </label>
+            <label class="gen-check">
+              <input type="checkbox" id="gp-seasonal" checked>
+              Сезонні продукти (березень, Краків)
+            </label>
+            <label class="gen-check">
+              <input type="checkbox" id="gp-budget" checked>
+              Бюджет ~1000 зл (Biedronka / Lidl / Kaufland)
+            </label>
+          </div>
+        </div>
+
+        <button class="gen-go-btn" id="gp-start-btn" onclick="runGeneration()">✨ Генерувати план</button>
+        <button class="gen-cancel-btn" id="gp-cancel-btn" onclick="closeGenPlanScreen()">Скасувати</button>
+
+        <div class="gen-progress" id="gp-progress">
+          <div class="gen-big-spin"></div>
+          <div class="gen-prog-txt" id="gp-prog-txt">Готую запит…</div>
+          <div class="gen-prog-sub">Залежить від відповіді проксі</div>
+          <div class="gen-steps">
+            <div class="gen-step" id="gps-1">📋 Аналіз відмов</div>
+            <div class="gen-step" id="gps-2">🧠 Генерація</div>
+            <div class="gen-step" id="gps-3">⚖️ КБЖВ</div>
+            <div class="gen-step" id="gps-4">✅ Готово</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const AppState = {
+      who: null,
+      replacedMeals: {},
+      currentDay: 1
+    };
+
+    const PROFILES = {
+      her: { name: 'Альона', emoji: '👩', kcal: 1750, p: 118, f: 63, c: 187 },
+      him: { name: 'Діма', emoji: '👨', kcal: 2450, p: 180, f: 75, c: 270 },
+    };
+
+    const SB_URL = 'https://rkacfuljpkjtehjkmqyc.supabase.co';
+    const SB_KEY = 'REPLACE_WITH_YOUR_SUPABASE_ANON_KEY';
+    const SB_H = {
+      apikey: SB_KEY,
+      Authorization: `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    };
+
+    const PROXY = `${SB_URL}/functions/v1/claude-proxy`;
+
+    async function sbGet(t, q = '') {
+      const r = await fetch(`${SB_URL}/rest/v1/${t}?${q}`, {
+        headers: { ...SB_H, Prefer: 'return=representation' }
+      });
+      if (!r.ok) throw new Error(`GET ${t}: ${r.status}`);
+      return r.json();
+    }
+
+    async function sbInsert(t, b) {
+      const r = await fetch(`${SB_URL}/rest/v1/${t}`, {
+        method: 'POST',
+        headers: SB_H,
+        body: JSON.stringify(b)
+      });
+      if (!r.ok) throw new Error(`INSERT ${t}: ${r.status}`);
+    }
+
+    async function sbDelete(t, q = '') {
+      const r = await fetch(`${SB_URL}/rest/v1/${t}?${q}`, {
+        method: 'DELETE',
+        headers: SB_H
+      });
+      if (!r.ok) throw new Error(`DELETE ${t}: ${r.status}`);
+    }
+
+    async function callClaude(prompt, maxTokens = 9000) {
+      const r = await fetch(PROXY, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SB_KEY,
+          Authorization: `Bearer ${SB_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: maxTokens,
+          messages: [{ role: 'user', content: prompt }]
+        }),
+      });
+
+      let data = null;
+      try {
+        data = await r.json();
+      } catch {
+        throw new Error(`Proxy повернув не JSON. HTTP ${r.status}`);
+      }
+
+      if (!r.ok) {
+        throw new Error(data?.error?.message || data?.message || `HTTP ${r.status}`);
+      }
+
+      const text =
+        data?.content?.[0]?.text ||
+        (typeof data?.text === 'string' ? data.text : null) ||
+        data?.data?.content?.[0]?.text ||
+        (typeof data?.data === 'string' ? data.data : null) ||
+        data?.result?.content?.[0]?.text ||
+        null;
+
+      if (!text || typeof text !== 'string') {
+        console.error('Unexpected proxy response:', data);
+        throw new Error('Проксі не повернув текст відповіді');
+      }
+
+      console.log('proxy response length:', text.length);
+      return text;
+    }
+
+    function extractJsonObject(text) {
+      const start = text.indexOf('{');
+      const end = text.lastIndexOf('}');
+      if (start === -1 || end === -1 || end <= start) {
+        throw new Error('Відповідь не містить JSON-об’єкт');
+      }
+      return text.slice(start, end + 1);
+    }
+
+    function extractJsonArray(text) {
+      const start = text.indexOf('[');
+      const end = text.lastIndexOf(']');
+      if (start === -1 || end === -1 || end <= start) {
+        throw new Error('Відповідь не містить JSON-масив');
+      }
+      return text.slice(start, end + 1);
+    }
+
+    async function withRetry(fn, attempts = 2) {
+      let lastError;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          return await fn();
+        } catch (e) {
+          lastError = e;
+          if (i < attempts - 1) {
+            await new Promise(r => setTimeout(r, 700));
+          }
+        }
+      }
+      throw lastError;
+    }
+
+    const PLAN = {
+      1:{ title:'Старт тижня — Prep Day', prep:'Зварити 800г гречки та 600г булгуру. Запекти 1 кг курячих грудок. Зварити бульйон 3 л.',
+        meals:[
+          {id:'1-b',type:'breakfast',icon:'☀️',name:'Скрембл з сиром та авокадо',
+           her:'2 яйця · 20г сиру · ¼ авокадо · 1 тост · помідор',
+           him:'3 яйця · 30г сиру · ½ авокадо · 2 тости цз · помідор',
+           kbjv:{her:[380,26,24,18],him:[480,30,26,58]}},
+          {id:'1-l',type:'lunch',icon:'🌙',name:'Куряча грудка з гречкою та броколі',
+           her:'150г грудки · 170г гречки · 150г броколі · 1 ч.л. олії',
+           him:'200г грудки · 230г гречки · 150г броколі · 1.5 ч.л. олії',
+           kbjv:{her:[720,48,15,88],him:[1010,68,18,112]}},
+          {id:'1-s',type:'snack',icon:'🍎',name:'Йогурт + яблуко',
+           her:'150г грецького йогурту 2% · 1 яблуко',
+           him:'200г йогурту · 1 яблуко · 15г мигдалю',
+           kbjv:{her:[150,12,2,22],him:[240,16,8,26]}},
+          {id:'1-d',type:'dinner',icon:'🌆',name:'Суп-пюре з червоної сочевиці',
+           her:'400мл супу · 2 скибки хліба · 1 ч.л. оливкової олії',
+           him:'500мл супу · 3 скибки хліба · 30г сиру зверху',
+           kbjv:{her:[500,32,22,59],him:[720,66,23,74]}},
+        ]},
+      2:{ title:'Рибний день — Омега-3', prep:null,
+        meals:[
+          {id:'2-b',type:'breakfast',icon:'☀️',name:'Яйця пашот на шпинаті з тостом',
+           her:'2 яйця пашот · шпинат · часник · 1 тост · лимон',
+           him:'2 яйця пашот · шпинат · 2 тости · банан',
+           kbjv:{her:[340,22,14,62],him:[440,26,16,72]}},
+          {id:'2-l',type:'lunch',icon:'🌙',name:'Скумбрія запечена з бататом',
+           her:'160г скумбрії · 200г батату · салат з огірка · 1 ч.л. олії',
+           him:'220г скумбрії · 260г батату · 1.5 ч.л. олії · салат',
+           kbjv:{her:[760,44,28,68],him:[1060,62,36,98]}},
+          {id:'2-s',type:'snack',icon:'🍎',name:'Морква + хумус',
+           her:'150г моркви · 40г хумусу',
+           him:'150г моркви + огірок · 70г хумусу · 1 тост',
+           kbjv:{her:[130,5,6,16],him:[220,10,8,26]}},
+          {id:'2-d',type:'dinner',icon:'🌆',name:'Булгур із запеченими овочами та яйцем',
+           her:'160г булгуру · 200г овочів · 2 яйця · 1 ч.л. олії',
+           him:'220г булгуру · 200г овочів · 2 яйця · 1 ч.л. олії',
+           kbjv:{her:[520,47,15,41],him:[730,82,15,74]}},
+        ]},
+      3:{ title:'Курка — класика без нудьги', prep:null,
+        meals:[
+          {id:'3-b',type:'breakfast',icon:'☀️',name:'Шакшука з болгарським перцем',
+           her:'2 яйця · перець+томат+цибуля · 2 скибки хліба',
+           him:'3 яйця · перець+томат · 3 скибки хліба · яблуко',
+           kbjv:{her:[390,22,14,66],him:[480,26,16,76]}},
+          {id:'3-l',type:'lunch',icon:'🌙',name:'Боул: гречка + курка + шпинат + яйце',
+           her:'160г гречки · 150г курки · 60г шпинату · 1 яйце · 1 ч.л. олії',
+           him:'220г гречки · 200г курки · 60г шпинату · 1 яйце · 1 ч.л. олії',
+           kbjv:{her:[700,57,16,60],him:[960,74,18,86]}},
+          {id:'3-s',type:'snack',icon:'🍎',name:'Банан + арахісова паста',
+           her:'1 банан · 15г арахісової пасти',
+           him:'1 великий банан · 25г пасти · 1 рисовий хлібець',
+           kbjv:{her:[190,5,6,30],him:[270,9,9,40]}},
+          {id:'3-d',type:'dinner',icon:'🌆',name:'Курячий мінестроне',
+           her:'400мл супу · 80г курки · 50г цз пасти · 1 ч.л. олії',
+           him:'500мл супу · 120г курки · 70г пасти · 1 скибка хліба',
+           kbjv:{her:[470,34,27,31],him:[740,71,32,68]}},
+        ]},
+      4:{ title:'Бобовий день — клітковина max', prep:'Зварити 400г бурого рису. Відкрити 2 банки нуту. Зварити 6 яєць.',
+        meals:[
+          {id:'4-b',type:'breakfast',icon:'☀️',name:'Сендвіч з яйцем і авокадо',
+           her:'1 тост · 1 яйце · ¼ авокадо · помідор · листя салату',
+           him:'2 тости · 1 яйце · ½ авокадо · гірчиця · груша',
+           kbjv:{her:[420,20,18,68],him:[510,24,20,80]}},
+          {id:'4-l',type:'lunch',icon:'🌙',name:'Булгур з тушкованою яловичиною',
+           her:'150г булгуру · 150г яловичини · овочі · 1 ч.л. олії',
+           him:'210г булгуру · 200г яловичини · овочі · 1 ч.л. олії',
+           kbjv:{her:[700,52,18,62],him:[980,72,22,102]}},
+          {id:'4-s',type:'snack',icon:'🍎',name:'Кефір + груша',
+           her:'200мл кефіру 1.5% · 1 груша',
+           him:'300мл кефіру · 1 груша · 20г волоських горіхів',
+           kbjv:{her:[150,7,2,24],him:[280,13,12,28]}},
+          {id:'4-d',type:'dinner',icon:'🌆',name:'Нутові котлетки з йогуртовим соусом',
+           her:'4 котлетки (~200г нуту) · 150г йогурт-соусу · 1 тост',
+           him:'6 котлеток (~300г нуту) · 150г соусу · 2 тости',
+           kbjv:{her:[480,39,25,33],him:[680,71,21,60]}},
+        ]},
+      5:{ title:'Риба #2 — Тріска', prep:null,
+        meals:[
+          {id:'5-b',type:'breakfast',icon:'☀️',name:'Яєчний рап з куркою та авокадо',
+           her:'2 яйця омлет-коржик · 80г курки · ¼ авокадо · салат',
+           him:'2 яйця · 100г курки · ½ авокадо · 1 тост + банан',
+           kbjv:{her:[420,34,20,58],him:[530,40,22,72]}},
+          {id:'5-l',type:'lunch',icon:'🌙',name:'Тріска на парі з рисом та пюре з горошку',
+           her:'180г тріски · 160г бурого рису · 120г пюре · 1 ч.л. олії',
+           him:'240г тріски · 220г рису · 160г пюре · 1.5 ч.л. олії',
+           kbjv:{her:[660,46,10,80],him:[930,66,14,114]}},
+          {id:'5-s',type:'snack',icon:'🍎',name:'Тост з авокадо та яйцем',
+           her:'1 тост · ¼ авокадо · 1 яйце варене',
+           him:'2 тости · ½ авокадо · 1 яйце · 1 ч.л. насіння льону',
+           kbjv:{her:[220,11,12,18],him:[340,16,18,26]}},
+          {id:'5-d',type:'dinner',icon:'🌆',name:'Том Ка з куркою (кокосовий суп)',
+           her:'400мл супу · 130г курки · 80г рису окремо',
+           him:'500мл супу · 180г курки · 120г рису окремо',
+           kbjv:{her:[450,27,21,31],him:[650,58,21,58]}},
+        ]},
+      6:{ title:'Вихідний — Smaczna niedziela', prep:'Після обіду: зварити гречку, запекти курку, підготувати овочі.',
+        meals:[
+          {id:'6-b',type:'breakfast',icon:'☀️',name:'Американські панкейки на кефірі 🥞',
+           her:'6 невеликих панкейків · йогурт + ягоди',
+           him:'8 панкейків · йогурт + ягоди + мед',
+           kbjv:{her:[410,20,10,58],him:[500,24,12,72]}},
+          {id:'6-l',type:'lunch',icon:'🌙',name:'Куряче карі з нутом та рисом',
+           her:'150г курки · 100г нуту · 140г рису · 60мл кокосового молока',
+           him:'200г курки · 130г нуту · 200г рису · 90мл кокосового молока',
+           kbjv:{her:[700,52,20,78],him:[980,74,28,108]}},
+          {id:'6-s',type:'snack',icon:'🍎',name:'Фрукти + горіхи',
+           her:'1 яблуко · 15г мигдалю',
+           him:'1 яблуко + 1 груша · 25г волоських горіхів',
+           kbjv:{her:[160,4,9,18],him:[270,6,16,30]}},
+          {id:'6-d',type:'dinner',icon:'🌆',name:'Піца на цільнозерновому тісті',
+           her:'2.5 шматки (~250г) · овочі + куряча начинка',
+           him:'3.5 шматки (~350г) · стандартна начинка',
+           kbjv:{her:[480,42,24,33],him:[700,76,19,60]}},
+        ]},
+      7:{ title:'Легкий день — детокс', prep:null,
+        meals:[
+          {id:'7-b',type:'breakfast',icon:'☀️',name:'Запечені яйця у томатах',
+           her:'2 яйця у томатах · пармезан · 2 скибки хліба',
+           him:'3 яйця · пармезан · 3 скибки хліба + банан',
+           kbjv:{her:[370,20,16,60],him:[460,24,18,74]}},
+          {id:'7-l',type:'lunch',icon:'🌙',name:'Запечена курка зі стручковою квасолею та рисом',
+           her:'160г гомілки без шкіри · 200г квасолі · 120г рису · 1 ч.л. олії',
+           him:'240г гомілки · 200г квасолі · 180г рису · 1.5 ч.л. олії',
+           kbjv:{her:[730,50,18,72],him:[1040,72,26,106]}},
+          {id:'7-s',type:'snack',icon:'🍎',name:'Йогурт з чіа та манго',
+           her:'150г йогурту · 1 ч.л. чіа · 80г манго',
+           him:'200г йогурту · 2 ч.л. чіа · 100г манго · 1 рисовий хлібець',
+           kbjv:{her:[160,11,3,22],him:[240,14,5,32]}},
+          {id:'7-d',type:'dinner',icon:'🌆',name:'Крем-суп з броколі та сиром',
+           her:'400мл супу · 40г сиру · 3 цз грінки · 1 ч.л. олії',
+           him:'500мл супу · 50г сиру · 4 грінки · 1 ч.л. олії',
+           kbjv:{her:[490,37,26,33],him:[710,70,26,58]}},
+        ]},
+      8:{ title:'Риба #3 — Лосось', prep:null,
+        meals:[
+          {id:'8-b',type:'breakfast',icon:'☀️',name:'Французькі тости 🍞',
+           her:'2 тости · яйце+молоко+кориця · йогурт + ягоди',
+           him:'3 тости · яйце+молоко · йогурт + ягоди + мед',
+           kbjv:{her:[420,20,14,56],him:[510,24,16,68]}},
+          {id:'8-l',type:'lunch',icon:'🌙',name:'Лосось з булгуром та салатом',
+           her:'170г лосося · 150г булгуру · салат · лимон',
+           him:'220г лосося · 200г булгуру · салат · 1 ч.л. олії',
+           kbjv:{her:[700,50,28,62],him:[960,70,36,86]}},
+          {id:'8-s',type:'snack',icon:'🍎',name:'Ягідний смузі',
+           her:'150г ягід · 150мл кефіру · 1 ст.л. вівсянки',
+           him:'200г ягід · 200мл кефіру · 2 ст.л. вівсянки · 1 банан',
+           kbjv:{her:[160,8,2,28],him:[290,13,3,52]}},
+          {id:'8-d',type:'dinner',icon:'🌆',name:'Гречана запіканка з яйцем та сиром',
+           her:'160г гречки · 3 яйця · 40г сиру · зелень',
+           him:'220г гречки · 3 яйця · 50г сиру',
+           kbjv:{her:[470,40,19,41],him:[690,73,20,64]}},
+        ]},
+      9:{ title:'Вегетаріанський день', prep:null,
+        meals:[
+          {id:'9-b',type:'breakfast',icon:'☀️',name:'Тост з рікоттою, лососем і огірком',
+           her:'2 тости · 60г рікотти · 60г лосося · огірок · кріп',
+           him:'3 тости · 80г рікотти · 80г лосося · огірок · груша',
+           kbjv:{her:[380,28,18,54],him:[460,32,20,66]}},
+          {id:'9-l',type:'lunch',icon:'🌙',name:'Dal з сочевиці та бурий рис',
+           her:'280мл далу (80г сочевиці) · 140г рису · 40мл кокосового молока',
+           him:'380мл далу · 200г рису · 60мл кокосового молока',
+           kbjv:{her:[730,48,14,86],him:[1040,72,20,120]}},
+          {id:'9-s',type:'snack',icon:'🍎',name:'Хрусткий нут',
+           her:'40г нуту запеченого зі спеціями',
+           him:'70г нуту · 1 яблуко',
+           kbjv:{her:[140,8,3,18],him:[230,12,4,36]}},
+          {id:'9-d',type:'dinner',icon:'🌆',name:'Шакшука з нутом',
+           her:'3 яйця · 80г нуту · томатний соус · 1.5 скибки хліба',
+           him:'4 яйця · 120г нуту · соус · 2.5 скибки хліба',
+           kbjv:{her:[500,34,28,29],him:[720,64,31,48]}},
+        ]},
+      10:{ title:'День 10 — фінал', prep:null,
+        meals:[
+          {id:'10-b',type:'breakfast',icon:'☀️',name:'Скрембл з лососем та шпинатом',
+           her:'2 яйця · 60г лосося · шпинат · 1 тост · лимон',
+           him:'3 яйця · 80г лосося · шпинат · 2 тости + банан',
+           kbjv:{her:[420,32,22,54],him:[520,38,24,66]}},
+          {id:'10-l',type:'lunch',icon:'🌙',name:'Куряча стірфрай з гречкою',
+           her:'150г курки · 170г гречки · 150г овочів · соєвий соус · 1 ч.л. олії',
+           him:'210г курки · 230г гречки · 150г овочів · 1.5 ч.л. олії',
+           kbjv:{her:[720,50,14,74],him:[1000,72,18,104]}},
+          {id:'10-s',type:'snack',icon:'🍎',name:'Фруктовий салат',
+           her:'1 яблуко + 1 ківі + 80г ягід',
+           him:'1 яблуко + 1 банан + 100г ягід + 15г горіхів',
+           kbjv:{her:[120,1,0,28],him:[240,4,7,42]}},
+          {id:'10-d',type:'dinner',icon:'🌆',name:'Грибний крем-суп з гречаними грінками',
+           her:'400мл супу · 50г грінок · 1 ст.л. сметани · 1 тост',
+           him:'500мл супу · 70г грінок · 40г сиру тертого',
+           kbjv:{her:[490,35,27,31],him:[690,66,26,58]}},
+        ]},
+    };
+
+    const PLAN_DAYS = Object.keys(PLAN).length;
+
+    const FALLBACK_REPLACEMENTS = {
+      breakfast: [
+        { name: 'Сирники з йогуртом та ягодами', icon: '☀️', her: '180г сирників · 80г йогурту · 70г ягід', him: '260г сирників · 120г йогурту · 100г ягід', kbjv: { her:[420,28,14,42], him:[620,40,20,60] } },
+        { name: 'Вафлі з творогу та бананом', icon: '☀️', her: '2 вафлі · 120г творогу · ½ банана', him: '3 вафлі · 180г творогу · 1 банан', kbjv: { her:[390,30,11,36], him:[560,42,16,58] } }
+      ],
+      lunch: [
+        { name: 'Курячі тефтелі з рисом і салатом', icon: '🌙', her: '160г тефтель · 150г рису · салат', him: '220г тефтель · 220г рису · салат', kbjv: { her:[650,46,15,72], him:[920,64,20,102] } },
+        { name: 'Індичка з булгуром та печеними овочами', icon: '🌙', her: '150г індички · 160г булгуру · 180г овочів', him: '220г індички · 220г булгуру · 180г овочів', kbjv: { her:[680,48,14,76], him:[960,68,18,108] } }
+      ],
+      lunch_2: [
+        { name: 'Запечена паста з куркою та сиром', icon: '🍝', her: '250г запіканки', him: '360г запіканки', kbjv: { her:[520,32,18,50], him:[760,48,24,72] } }
+      ],
+      snack: [
+        { name: 'Сир кисломолочний з фруктами', icon: '🍎', her: '150г сиру · 1 ківі', him: '220г сиру · 1 банан', kbjv: { her:[180,20,4,14], him:[280,30,6,28] } },
+        { name: 'Йогурт з ягодами та насінням', icon: '🍎', her: '170г йогурту · 80г ягід · 1 ч.л. насіння', him: '230г йогурту · 100г ягід · 2 ч.л. насіння', kbjv: { her:[170,14,5,16], him:[250,20,8,22] } }
+      ],
+      dinner: [
+        { name: 'Курячий суп з овочами та грінками', icon: '🌆', her: '400мл супу · 2 грінки', him: '500мл супу · 3 грінки', kbjv: { her:[430,32,14,34], him:[620,48,18,46] } },
+        { name: 'Тушкована індичка з овочами', icon: '🌆', her: '150г індички · 220г овочів · 1 ч.л. олії', him: '220г індички · 260г овочів · 1 ч.л. олії', kbjv: { her:[410,36,15,18], him:[560,50,18,22] } }
+      ]
+    };
+
+    function safeClone(obj) {
+      if (typeof structuredClone === 'function') return structuredClone(obj);
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function getFallbackReplacement(orig, dislikes = []) {
+      const pool = FALLBACK_REPLACEMENTS[orig.type] || [];
+      const lowerDislikes = dislikes.map(x => String(x).toLowerCase());
+
+      const found = pool.find(item =>
+        item.name.toLowerCase() !== String(orig.name).toLowerCase() &&
+        !lowerDislikes.includes(item.name.toLowerCase())
+      );
+
+      if (!found) {
+        throw new Error('Не вдалося підібрати fallback-заміну');
+      }
+
+      return safeClone(found);
+    }
+
+    const LS_KEY = 'meal-dislikes';
+
+    async function loadDislikes() {
+      try {
+        const d = await sbGet('dislikes', 'select=who,meal_name,meal_type&order=created_at.desc');
+        return d.map(r => ({ who: r.who, name: r.meal_name, type: r.meal_type }));
+      } catch (e) {
+        try {
+          return JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+        } catch {
+          return [];
+        }
+      }
+    }
+
+    async function addDislike(name, type, who) {
+      try {
+        const ex = await sbGet('dislikes', `select=id&who=eq.${encodeURIComponent(who)}&meal_name=eq.${encodeURIComponent(name)}&limit=1`);
+        if (!ex.length) {
+          await sbInsert('dislikes', { who, meal_name: name, meal_type: type });
+        }
+      } catch (e) {
+        try {
+          const l = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+          if (!l.some(d => d.name === name && d.who === who)) {
+            l.push({ name, type, who });
+            localStorage.setItem(LS_KEY, JSON.stringify(l));
+          }
+        } catch {}
+      }
+      return loadDislikes();
+    }
+
+    async function clearDislikes() {
+      try {
+        await sbDelete('dislikes', 'id=neq.00000000-0000-0000-0000-000000000000');
+      } catch {
+        localStorage.removeItem(LS_KEY);
+      }
+      showToast('🗑️ Список відхилених очищено');
+      await refreshDislikesPanel();
+    }
+
+    async function refreshDislikesPanel() {
+      const list = await loadDislikes();
+      const panel = document.getElementById('dislikes-list');
+      const badge = document.getElementById('dislikes-badge');
+
+      if (!panel || !badge) return;
+
+      badge.textContent = list.length || '';
+      badge.style.display = list.length ? 'inline-block' : 'none';
+
+      if (!list.length) {
+        panel.innerHTML = '<div class="dl-empty">Поки жодної відмови 👍</div>';
+        return;
+      }
+
+      const byWho = { her: [], him: [] };
+      list.forEach(d => (byWho[d.who] ??= []).push(d));
+
+      const grp = (who, items) => {
+        if (!items?.length) return '';
+        return `
+          <div class="dl-group">
+            <div class="dl-group-lbl">${PROFILES[who].emoji} ${PROFILES[who].name}</div>
+            ${items.map(d => `
+              <div class="dl-item">
+                <span class="dl-type-tag">${lbl(d.type)}</span>
+                <span class="dl-item-name">${d.name}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      };
+
+      panel.innerHTML =
+        grp('her', byWho.her) +
+        grp('him', byWho.him) +
+        '<button class="dl-clear-btn" onclick="clearDislikes()">🗑️ Очистити все</button>';
+    }
+
+    function selectWho(who) {
+      AppState.who = who;
+      localStorage.setItem('meal-who', who);
+      document.getElementById('btn-her').classList.toggle('selected', who === 'her');
+      document.getElementById('btn-him').classList.toggle('selected', who === 'him');
+      document.getElementById('start-btn').disabled = false;
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const saved = localStorage.getItem('meal-who');
+      if (saved && PROFILES[saved]) {
+        AppState.who = saved;
+        show('app');
+        hide('setup-screen');
+        await initApp();
+      }
+    });
+
+    async function startApp() {
+      if (!AppState.who) return;
+      localStorage.setItem('meal-who', AppState.who);
+      hide('setup-screen');
+      show('app');
+      await initApp();
+    }
+
+    function resetWho() {
+      localStorage.removeItem('meal-who');
+      hide('app');
+      show('setup-screen', 'flex');
+      AppState.who = null;
+      document.getElementById('btn-her').classList.remove('selected');
+      document.getElementById('btn-him').classList.remove('selected');
+      document.getElementById('start-btn').disabled = true;
+    }
+
+    function show(id, d = 'block') {
+      const el = document.getElementById(id);
+      if (el) el.style.display = d;
+    }
+
+    function hide(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    async function initApp() {
+      const p = PROFILES[AppState.who];
+      document.getElementById('hdr-who-btn').textContent = `${p.emoji} ${p.name}`;
+      document.getElementById('hdr-meta').textContent = `${Object.keys(PLAN).length} днів · Краків · ${p.name}`;
+      document.getElementById('hdr-chips').innerHTML =
+        `<span class="hdr-chip">🎯 ${p.kcal} ккал</span>
+         <span class="hdr-chip">💪 Б${p.p}г</span>
+         <span class="hdr-chip">🥑 Ж${p.f}г</span>
+         <span class="hdr-chip">🌾 В${p.c}г</span>`;
+
+      const bar = document.getElementById('tabs-bar');
+      bar.innerHTML = '';
+
+      const totalDays = Object.keys(PLAN).length;
+      for (let d = 1; d <= totalDays; d++) {
+        const b = document.createElement('button');
+        b.className = 'tab-btn' + (d === 1 ? ' active' : '');
+        b.textContent = `День ${d}`;
+        b.onclick = () => switchDay(d);
+        bar.appendChild(b);
+      }
+
+      renderAllDays();
+      switchDay(1);
+      refreshDislikesPanel();
+    }
+
+    function lbl(t) {
+      return {
+        breakfast: 'Сніданок',
+        lunch: 'Обід',
+        lunch_2: 'Обід 2',
+        snack: 'Перекус',
+        dinner: 'Вечеря'
+      }[t] || t;
+    }
+
+    function renderAllDays() {
+      const main = document.getElementById('main-content');
+      main.innerHTML = '';
+      const totalDays = Object.keys(PLAN).length;
+      for (let d = 1; d <= totalDays; d++) {
+        const el = document.createElement('div');
+        el.id = `day-${d}`;
+        el.className = 'tab-panel';
+        el.innerHTML = renderDay(d);
+        main.appendChild(el);
+      }
+    }
+
+    function renderDay(d) {
+      const day = PLAN[d];
+      if (!day) return '';
+
+      let h = `
+        <div class="day-hdr">
+          <span class="day-label">День ${d}</span>
+          <h2 class="day-title">${day.title}</h2>
+        </div>
+      `;
+
+      if (day.prep) {
+        h += `
+          <div class="prep-box">
+            <span class="prep-icon">🔪</span>
+            <div><strong>Prep сьогодні:</strong> ${day.prep}</div>
+          </div>
+        `;
+      }
+
+      h += '<div class="meals-grid">';
+
+      for (const m of day.meals) {
+        const rep = AppState.replacedMeals[m.id];
+        const cur = rep || m;
+
+        h += `
+          <div class="meal-card ${m.type === 'snack' ? 'snack-card' : ''} ${rep ? 'replaced' : ''}" id="card-${m.id}">
+            <div class="meal-bar ${m.type}"></div>
+            <div class="meal-head">
+              <div class="meal-type-tag">${cur.icon} ${lbl(m.type)}</div>
+              <div class="meal-name">${cur.name}</div>
+            </div>
+
+            <div class="portions" id="por-${m.id}">
+              <div class="portion her">
+                <span class="p-who">👩 Альона</span>
+                <span class="p-text">${cur.her}</span>
+              </div>
+              <div class="portion him">
+                <span class="p-who">👨 Діма</span>
+                <span class="p-text">${cur.him}</span>
+              </div>
+            </div>
+
+            <div class="generating" id="gen-${m.id}">
+              <div class="gen-spin"></div>
+              <div class="gen-label">AI шукає заміну…</div>
+            </div>
+
+            <div class="meal-foot">
+              <button class="dislike-btn" id="dbtn-${m.id}" onclick="dislikeMeal('${m.id}', ${d})">👎 Не подобається</button>
+              <span class="replaced-badge">✨ Замінено</span>
+            </div>
+          </div>
+        `;
+      }
+
+      h += '</div>';
+      h += renderKBJV(d);
+      return h;
+    }
+
+    function switchDay(d) {
+      AppState.currentDay = d;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`day-${d}`)?.classList.add('active');
+
+      const tabs = document.querySelectorAll('.tab-btn');
+      if (tabs[d - 1]) {
+        tabs[d - 1].classList.add('active');
+        tabs[d - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+
+    function renderKBJV(d) {
+      const day = PLAN[d];
+      let hT = [0,0,0,0];
+      let himT = [0,0,0,0];
+
+      for (const m of day.meals) {
+        const k = (AppState.replacedMeals[m.id] || m).kbjv || m.kbjv;
+        if (!k) continue;
+        k.her.forEach((v, i) => hT[i] += v);
+        k.him.forEach((v, i) => himT[i] += v);
+      }
+
+      const ht = PROFILES.her;
+      const ht2 = PROFILES.him;
+
+      const dl = (v, t) => {
+        const p = Math.round(((v - t) / t) * 100);
+        if (Math.abs(p) <= 8) return '<span class="d-ok">✓</span>';
+        return p > 8
+          ? `<span class="d-over">+${p}%</span>`
+          : `<span class="d-low">${p}%</span>`;
+      };
+
+      return `
+        <div class="kbjv-wrap" id="kbjv-${d}">
+          <div class="kbjv-scroll">
+            <div class="kbjv-table">
+              <div class="kbjv-hdr">
+                <div>Прийом</div><div>ккал</div><div>Білок</div><div>Жири</div><div>Вуглев.</div>
+              </div>
+
+              ${day.meals.map(m => {
+                const cur = AppState.replacedMeals[m.id] || m;
+                const k = cur.kbjv || m.kbjv;
+                if (!k) return '';
+                return `
+                  <div class="kbjv-row">
+                    <div class="kbjv-lbl">${cur.icon} ${lbl(m.type)}</div>
+                    <div class="kbjv-val">${k.her[0]}/${k.him[0]}</div>
+                    <div class="kbjv-val p">${k.her[1]}/${k.him[1]}</div>
+                    <div class="kbjv-val f">${k.her[2]}/${k.him[2]}</div>
+                    <div class="kbjv-val c">${k.her[3]}/${k.him[3]}</div>
+                  </div>
+                `;
+              }).join('')}
+
+              <div class="kbjv-row her-row">
+                <div class="kbjv-lbl">👩 Альона</div>
+                <div class="kbjv-val">${hT[0]}</div>
+                <div class="kbjv-val p">${hT[1]}</div>
+                <div class="kbjv-val f">${hT[2]}</div>
+                <div class="kbjv-val c">${hT[3]}</div>
+              </div>
+
+              <div class="kbjv-row him-row">
+                <div class="kbjv-lbl">👨 Діма</div>
+                <div class="kbjv-val">${himT[0]}</div>
+                <div class="kbjv-val p">${himT[1]}</div>
+                <div class="kbjv-val f">${himT[2]}</div>
+                <div class="kbjv-val c">${himT[3]}</div>
+              </div>
+
+              <div class="kbjv-row tgt-row">
+                <div class="kbjv-lbl">🎯 Ціль А</div>
+                <div class="kbjv-val">${dl(hT[0], ht.kcal)}</div>
+                <div class="kbjv-val">${dl(hT[1], ht.p)}</div>
+                <div class="kbjv-val">${dl(hT[2], ht.f)}</div>
+                <div class="kbjv-val">${dl(hT[3], ht.c)}</div>
+              </div>
+
+              <div class="kbjv-row tgt-row">
+                <div class="kbjv-lbl">🎯 Ціль Д</div>
+                <div class="kbjv-val">${dl(himT[0], ht2.kcal)}</div>
+                <div class="kbjv-val">${dl(himT[1], ht2.p)}</div>
+                <div class="kbjv-val">${dl(himT[2], ht2.f)}</div>
+                <div class="kbjv-val">${dl(himT[3], ht2.c)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="kbjv-foot">
+            Альона: 1750 ккал / Б118 / Ж63 / В187 · Діма: 2450 ккал / Б180 / Ж75 / В270
+          </div>
+        </div>
+      `;
+    }
+
+    const _busy = new Set();
+
+    async function dislikeMeal(mealId, dayNum) {
+      if (_busy.has(mealId)) return;
+      _busy.add(mealId);
+
+      const btn = document.getElementById(`dbtn-${mealId}`);
+      const gen = document.getElementById(`gen-${mealId}`);
+      const card = document.getElementById(`card-${mealId}`);
+      const por = document.getElementById(`por-${mealId}`);
+      const meal = PLAN[dayNum]?.meals.find(m => m.id === mealId);
+
+      if (!meal || !btn || !gen || !card || !por) {
+        _busy.delete(mealId);
+        return;
+      }
+
+      const cur = AppState.replacedMeals[mealId] || meal;
+
+      btn.disabled = true;
+      por.style.display = 'none';
+      gen.classList.add('active');
+
+      try {
+        await addDislike(cur.name, meal.type, AppState.who);
+        await refreshDislikesPanel();
+
+        const newM = await generateReplacement(cur, meal, dayNum);
+        AppState.replacedMeals[mealId] = newM;
+
+        const mealNameEl = card.querySelector('.meal-name');
+        const mealTypeEl = card.querySelector('.meal-type-tag');
+
+        if (mealNameEl) mealNameEl.textContent = newM.name;
+        if (mealTypeEl) mealTypeEl.textContent = `${newM.icon} ${lbl(meal.type)}`;
+
+        por.innerHTML = `
+          <div class="portion her">
+            <span class="p-who">👩 Альона</span>
+            <span class="p-text">${newM.her}</span>
+          </div>
+          <div class="portion him">
+            <span class="p-who">👨 Діма</span>
+            <span class="p-text">${newM.him}</span>
+          </div>
+        `;
+
+        por.style.display = 'flex';
+        gen.classList.remove('active');
+        card.classList.add('replaced');
+        btn.innerHTML = '👎 Замінити ще';
+        btn.disabled = false;
+
+        const panel = document.getElementById(`day-${dayNum}`);
+        const old = panel?.querySelector('.kbjv-wrap');
+        const tmp = document.createElement('div');
+        tmp.innerHTML = renderKBJV(dayNum);
+
+        if (old) {
+          old.replaceWith(tmp.firstElementChild);
+        } else if (panel) {
+          panel.appendChild(tmp.firstElementChild);
+        }
+
+        showToast('✨ Страву замінено!');
+      } catch (e) {
+        gen.classList.remove('active');
+        por.style.display = 'flex';
+        btn.disabled = false;
+        showToast(`❌ ${e.message}`);
+        console.error(e);
+      } finally {
+        _busy.delete(mealId);
+      }
+    }
+
+    async function generateReplacement(cur, orig, dayNum) {
+      const day = PLAN[dayNum];
+
+      let hE = [0,0,0,0];
+      let himE = [0,0,0,0];
+
+      for (const m of day.meals) {
+        if (m.id === orig.id) continue;
+        const k = (AppState.replacedMeals[m.id] || m).kbjv || m.kbjv;
+        if (!k) continue;
+        k.her.forEach((v, i) => hE[i] += v);
+        k.him.forEach((v, i) => himE[i] += v);
+      }
+
+      const ht = PROFILES.her;
+      const ht2 = PROFILES.him;
+      const hL = [ht.kcal - hE[0], ht.p - hE[1], ht.f - hE[2], ht.c - hE[3]];
+      const himL = [ht2.kcal - himE[0], ht2.p - himE[1], ht2.f - himE[2], ht2.c - himE[3]];
+
+      const others = day.meals
+        .filter(m => m.id !== orig.id)
+        .map(m => `- ${lbl(m.type)}: ${(AppState.replacedMeals[m.id] || m).name}`)
+        .join('\n');
+
+      const dl = await loadDislikes();
+      const hD = dl.filter(d => d.who === 'her').map(d => d.name);
+      const himD = dl.filter(d => d.who === 'him').map(d => d.name);
+      const allDislikes = [...hD, ...himD];
+
+      const prompt = `<task>Заміни одну страву. Поверни ТІЛЬКИ валідний JSON об'єкт. Без markdown.</task>
+<replace>
+  <name>${cur.name}</name>
+  <type>${orig.type}</type>
+  <day>${dayNum}</day>
+  <replaced_by>${AppState.who}</replaced_by>
+</replace>
+<profiles>
+  <her kcal="${ht.kcal}" p="${ht.p}" f="${ht.f}" c="${ht.c}" />
+  <him kcal="${ht2.kcal}" p="${ht2.p}" f="${ht2.f}" c="${ht2.c}" />
+</profiles>
+<remaining_today>
+  <her kcal="${hL[0]}" p="${hL[1]}" f="${hL[2]}" c="${hL[3]}" />
+  <him kcal="${himL[0]}" p="${himL[1]}" f="${himL[2]}" c="${himL[3]}" />
+</remaining_today>
+<other_meals>
+${others}
+</other_meals>
+<dislikes>
+  <her>${hD.length ? hD.join(', ') : 'немає'}</her>
+  <him>${himD.length ? himD.join(', ') : 'немає'}</him>
+</dislikes>
+<rules>
+- Потрібна інша страва, не схожа на поточну
+- Не дублювати страви з цього дня
+- Реальні нормальні страви, не "яйця + тост"
+- Для dinner у Діми менше вуглеводів
+- Продукти доступні в Польщі
+- Формат:
+{
+  "name": "...",
+  "icon": "☀️/🌙/🍎/🌆/🍝",
+  "her": "...",
+  "him": "...",
+  "kbjv": { "her":[k,p,f,c], "him":[k,p,f,c] }
+}
+</rules>`;
+
+      try {
+        const text = await withRetry(() => callClaude(prompt, 1000), 2);
+        const parsed = JSON.parse(extractJsonObject(text));
+
+        if (
+          !parsed ||
+          typeof parsed.name !== 'string' ||
+          typeof parsed.her !== 'string' ||
+          typeof parsed.him !== 'string' ||
+          !parsed.kbjv ||
+          !Array.isArray(parsed.kbjv.her) ||
+          !Array.isArray(parsed.kbjv.him)
+        ) {
+          throw new Error('AI повернув неповну структуру');
+        }
+
+        return parsed;
+      } catch (e) {
+        console.warn('AI replacement failed, using fallback:', e);
+        return getFallbackReplacement(orig, allDislikes);
+      }
+    }
+
+    async function openGenPlanScreen() {
+      const screen = document.getElementById('gen-screen');
+      screen.classList.add('active');
+
+      document.getElementById('gp-progress').classList.remove('active');
+      document.getElementById('gp-start-btn').disabled = false;
+      document.getElementById('gp-cancel-btn').style.display = 'block';
+
+      const dl = await loadDislikes();
+      const prev = document.getElementById('gp-dislikes-preview');
+
+      if (!dl.length) {
+        prev.innerHTML = '<div class="gen-empty">Немає відхилених — план буде різноманітним</div>';
+        return;
+      }
+
+      prev.innerHTML = `
+        <div class="gen-tags">
+          ${dl.map(d => `<span class="gen-tag">${d.who === 'her' ? '👩' : '👨'} ${d.name}</span>`).join('')}
+        </div>
+      `;
+    }
+
+    function closeGenPlanScreen() {
+      document.getElementById('gen-screen').classList.remove('active');
+    }
+
+    function setStep(n) {
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`gps-${i}`).className =
+          'gen-step' + (i < n ? ' done' : i === n ? ' active' : '');
+      }
+    }
+
+    async function runGeneration() {
+      const btn = document.getElementById('gp-start-btn');
+      const cancel = document.getElementById('gp-cancel-btn');
+      const prog = document.getElementById('gp-progress');
+      const txt = document.getElementById('gp-prog-txt');
+
+      btn.disabled = true;
+      cancel.style.display = 'none';
+      prog.classList.add('active');
+
+      try {
+        setStep(1);
+        txt.textContent = 'Завантажую список відмов…';
+
+        const dl = await loadDislikes();
+        const hD = dl.filter(d => d.who === 'her').map(d => d.name);
+        const himD = dl.filter(d => d.who === 'him').map(d => d.name);
+
+        const opts = {
+          variety: document.getElementById('gp-variety').checked,
+          seasonal: document.getElementById('gp-seasonal').checked,
+          budget: document.getElementById('gp-budget').checked
+        };
+
+        setStep(2);
+        txt.textContent = 'AI генерує страви…';
+
+        const raw = await withRetry(() => callClaude(buildGenPrompt(hD, himD, opts), 9000), 2);
+
+        setStep(3);
+        txt.textContent = 'Перевіряю структуру та КБЖВ…';
+
+        const plan = parseGeneratedPlan(raw);
+
+        setStep(4);
+        txt.textContent = 'Застосовую новий план…';
+
+        applyNewPlan(plan);
+        closeGenPlanScreen();
+        switchDay(1);
+        showToast('✨ Новий план готовий!');
+      } catch (e) {
+        console.error(e);
+        prog.classList.remove('active');
+        btn.disabled = false;
+        cancel.style.display = 'block';
+        showToast(`❌ ${e.message}`);
+      }
+    }
+
+    function buildGenPrompt(hD, himD, opts) {
+      const ht = PROFILES.her;
+      const ht2 = PROFILES.him;
+
+      return `<task>Створи план харчування на 7 днів для сім'ї (2 дорослих + 2 дітей).
+Поверни ТІЛЬКИ валідний JSON масив із 7 елементів. Без markdown. Без тексту поза JSON.</task>
+<philosophy>Спочатку — СМАЧНІ реальні страви. Потім — порції під КБЖВ.</philosophy>
+<profiles><her kcal="${ht.kcal}" p="${ht.p}" f="${ht.f}" c="${ht.c}" tol="7%"/><him kcal="${ht2.kcal}" p="${ht2.p}" f="${ht2.f}" c="${ht2.c}" tol="7%"/></profiles>
+<dislikes><her>${hD.length ? hD.join(', ') : 'немає'}</her><him>${himD.length ? himD.join(', ') : 'немає'}</him></dislikes>
+<opts>${opts.variety ? 'Не повторювати основу страви більше 2 разів.' : ''} ${opts.seasonal ? 'Сезон: березень Польща.' : ''} ${opts.budget ? 'Тільки Biedronka/Lidl/Kaufland.' : ''}</opts>
+<structure>Будні 1-5: breakfast,lunch,snack,dinner. Вихідні 6-7: breakfast,lunch,lunch_2,snack,dinner.</structure>
+<rules>breakfast: family-friendly, дитячо-дружній, НЕ "яйця+тост". dinner: повноцінна, без омлетів як вечеря, Діма менше вуглеводів. lunch_2: comfort family. Всі breakfast/dinner: без гострого.</rules>
+<critical>Дні 1-5: рівно 4 meals. Дні 6-7: рівно 5 meals. icons: breakfast=☀️ lunch=🌙 lunch_2=🍝 snack=🍎 dinner=🌆. Ніколи не обривай JSON.</critical>
+[{"day":1,"title":"...","prep":null,"meals":[{"type":"breakfast","icon":"☀️","name":"...","her":"...г","him":"...г","kbjv":{"her":[0,0,0,0],"him":[0,0,0,0]},"ingredients_total":[{"name":"яйця","qty":5,"unit":"шт","category":"Холодильник"}]}]}]`;
+    }
+
+    function parseGeneratedPlan(raw) {
+      const clean = raw.replace(/```json|```/g, '').trim();
+      let arr;
+
+      try {
+        arr = JSON.parse(extractJsonArray(clean));
+      } catch (err) {
+        throw new Error(`JSON: ${err.message}`);
+      }
+
+      if (!Array.isArray(arr) || arr.length < 7) {
+        throw new Error(`Очікувалось 7 днів, отримано ${arr?.length}`);
+      }
+
+      return arr.slice(0, 7);
+    }
+
+    function applyNewPlan(arr) {
+      const np = {};
+
+      arr.forEach((day, idx) => {
+        const d = idx + 1;
+        const expectedTypes = d >= 6
+          ? ['breakfast', 'lunch', 'lunch_2', 'snack', 'dinner']
+          : ['breakfast', 'lunch', 'snack', 'dinner'];
+
+        const meals = Array.isArray(day.meals) ? day.meals : [];
+
+        const normalizedMeals = expectedTypes.map((expectedType, mi) => {
+          const m = meals[mi] || {};
+          const iconMap = {
+            breakfast: '☀️',
+            lunch: '🌙',
+            lunch_2: '🍝',
+            snack: '🍎',
+            dinner: '🌆'
+          };
+
+          return {
+            id: `${d}-${expectedType}-${mi}`,
+            type: expectedType,
+            icon: m.icon || iconMap[expectedType],
+            name: m.name || `Страва ${mi + 1}`,
+            her: m.her || '',
+            him: m.him || '',
+            kbjv: m.kbjv || { her:[0,0,0,0], him:[0,0,0,0] },
+            ingredients_total: Array.isArray(m.ingredients_total) ? m.ingredients_total : []
+          };
+        });
+
+        np[d] = {
+          title: day.title || `День ${d}`,
+          prep: day.prep || null,
+          meals: normalizedMeals
+        };
+      });
+
+      Object.keys(PLAN).forEach(k => delete PLAN[k]);
+      Object.assign(PLAN, np);
+
+      Object.keys(AppState.replacedMeals).forEach(k => delete AppState.replacedMeals[k]);
+
+      renderAllDays();
+      switchDay(1);
+
+      const p = PROFILES[AppState.who];
+      if (p) {
+        document.getElementById('hdr-meta').textContent = `${Object.keys(PLAN).length} днів · Краків · ${p.name}`;
+      }
+    }
+
+    function toggleDislikesPanel() {
+      const w = document.getElementById('dislikes-panel-wrap');
+      const o = document.getElementById('panel-overlay');
+      const open = w.classList.contains('open');
+
+      w.classList.toggle('open', !open);
+      o.classList.toggle('active', !open);
+
+      if (!open) {
+        refreshDislikesPanel();
+      }
+    }
+
+    let _tt = null;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+
+      if (_tt) clearTimeout(_tt);
+      _tt = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>
