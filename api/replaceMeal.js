@@ -1,26 +1,17 @@
-import { callOpenAI } from './openaiClient.js';
-import { buildReplaceMealUserPrompt, buildSystemPrompt } from './prompts.js';
-import { normalizeMeal } from '../core/normalize.js';
-import { validateMeal } from '../core/validate.js';
+import { callOpenAI } from "./openaiClient.js";
+import { buildReplaceMealPayload } from "./prompts.js";
+import { normalizeMeal } from "../core/normalize.js";
 
-export async function replaceMealWithAI({ mealId, mealType, dayIndex, params, existingDayMeals, allMealNames }) {
-  const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildReplaceMealUserPrompt({
-    mealId,
-    mealType,
-    dayIndex,
-    params,
-    existingDayMeals,
-    allMealNames,
+export async function replaceMeal(input) {
+  const payload = buildReplaceMealPayload(input);
+
+  const parsed = await callOpenAI({
+    action: "replace_meal",
+    payload,
   });
 
-  let lastError = null;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    try {
-      const parsed = await callOpenAI({ systemPrompt, userPrompt });
-      validateMeal(parsed, mealId, mealType);
-      return normalizeMeal(parsed, mealId);
-    } catch (error) {
+  return normalizeMeal(parsed, payload.meal_id);
+} catch (error) {
       lastError = error;
     }
   }
