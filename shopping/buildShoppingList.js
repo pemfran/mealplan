@@ -1,4 +1,3 @@
-
 const CATEGORY_MAP = {
   'chicken breast': 'Protein',
   egg: 'Protein',
@@ -49,9 +48,12 @@ export function buildShoppingList(plan, replacedMeals = {}) {
 
   for (const meal of finalMeals) {
     for (const ingredient of meal.ingredients) {
-      const name = normalizeIngredientName(ingredient.name);
-      const unit = normalizeUnit(ingredient.unit);
+
+      const name = ingredient.name.trim().toLowerCase();
+      const unit = (ingredient.unit || 'pcs').trim().toLowerCase();
+
       const key = `${name}__${unit}`;
+
       if (!aggregate[key]) {
         aggregate[key] = {
           name,
@@ -60,14 +62,18 @@ export function buildShoppingList(plan, replacedMeals = {}) {
           category: categoryForName(name),
         };
       }
+
       aggregate[key].amount += Number(ingredient.amount) || 0;
     }
   }
 
   const groups = {};
+
   for (const item of Object.values(aggregate)) {
     const category = item.category;
+
     if (!groups[category]) groups[category] = [];
+
     groups[category].push({
       ...item,
       amount: Math.round(item.amount * 10) / 10,
@@ -78,5 +84,7 @@ export function buildShoppingList(plan, replacedMeals = {}) {
     arr.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  return Object.fromEntries(Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)));
+  return Object.fromEntries(
+    Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  );
 }
