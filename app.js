@@ -1,557 +1,270 @@
-import { AppState, PROFILES, PLAN } from './data.js';
-import {
-  loadReplacedMeals,
-  loadDislikes,
-  addDislike,
-  clearDislikesData,
-  upsertReplacedMeal,
-  clearReplacedMeals,
-  callClaude,
-  withRetry
-} from './api.js';
-import {
-  lbl,
-  getEffectiveMeal,
-  calculateDayTotals,
-  buildGenPrompt,
-  parseGeneratedPlan,
-  normalizePlan,
-  getFallbackGeneratedPlan,
-  generateReplacement
-} from './logic.js';
+import { generateMenuPlan } from './api/generateMenu.js';
+import { replaceMealWithAI } from './api/replaceMeal.js';
+import { buildShoppingList } from './shopping/buildShoppingList.js';
+import { AppState, clearReplacedMeals, loadLocalReplacedMeals, loadPlan, saveLocalReplacedMeals, savePlan } from './state.js';
+import { fetchReplacedMeals, upsertReplacedMeal } from './supabase.js';
 
-const busyMeals = new Set();
-let toastTimer = null;
+const els = {
+  adultsInput: document.getElementById('adultsInput'),
+  childrenInput: document.getElementById('childrenInput'),
+  caloriesAdult1Input: document.getElementById('caloriesAdult1Input'),
+  caloriesAdult2Input: document.getElementById('caloriesAdult2Input'),
+  proteinAdult1Input: document.getElementById('proteinAdult1Input'),
+  proteinAdult2Input: document.getElementById('proteinAdult2Input'),
+  dislikesInput: document.getElementById('dislikesInput'),
+  carbsInput: document.getElementById('carbsInput'),
+  notesInput: document.getElementById('notesInput'),
+  generateBtn: document.getElementById('generateBtn'),
+  resetBtn: document.getElementById('resetBtn'),
+  status: document.getElementById('status'),
+  daysRoot: document.getElementById('daysRoot'),
+  shoppingRoot: document.getElementById('shoppingRoot'),
+};
 
-function show(id, display = 'block') {
-  const el = document.getElementById(id);
-  if (el) el.style.display = display;
-}
-
-function hide(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = 'none';
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-
-  t.textContent = msg;
-  t.classList.add('show');
-
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    t.classList.remove('show');
-  }, 3200);
-}
-
-function selectWho(who) {
-  AppState.who = who;
-  localStorage.setItem('meal-who', who);
-
-  document.getElementById('btn-her')?.classList.toggle('selected', who === 'her');
-  document.getElementById('btn-him')?.classList.toggle('selected', who === 'him');
-  document.getElementById('start-btn').disabled = false;
-}
-
-async function startApp() {
-  if (!AppState.who) return;
-
-  localStorage.setItem('meal-who', AppState.who);
-  hide('setup-screen');
-  show('app');
-  await initApp();
-}
-
-function resetWho() {
-  localStorage.removeItem('meal-who');
-  hide('app');
-  show('setup-screen', 'flex');
-
-  AppState.who = null;
-
-  document.getElementById('btn-her')?.classList.remove('selected');
-  document.getElementById('btn-him')?.classList.remove('selected');
-  document.getElementById('start-btn').disabled = true;
-}
-
-async function initApp() {
-  const p = PROFILES[AppState.who];
-  if (!p) return;
-
-  document.getElementById('hdr-who-btn').textContent = `${p.emoji} ${p.name}`;
-  document.getElementById('hdr-meta').textContent = `${Object.keys(PLAN).length} днів · Краків · ${p.name}`;
-  document.getElementById('hdr-chips').innerHTML = `
-    <span class="hdr-chip">🎯 ${p.kcal} ккал</span>
-    <span class="hdr-chip">💪 Б${p.p}г</span>
-    <span class="hdr-chip">🥑 Ж${p.f}г</span>
-    <span class="hdr-chip">🌾 В${p.c}г</span>
-  `;
-
-  AppState.replacedMeals = await loadReplacedMeals();
-
-  const tabsBar = document.getElementById('tabs-bar');
-  tabsBar.innerHTML = '';
-
-  const totalDays = Object.keys(PLAN).length;
-  for (let d = 1; d <= totalDays; d++) {
-    const btn = document.createElement('button');
-    btn.className = `tab-btn${d === 1 ? ' active' : ''}`;
-    btn.textContent = `День ${d}`;
-    btn.onclick = () => switchDay(d);
-    tabsBar.appendChild(btn);
-  }
-
-  renderAllDays();
-  switchDay(1);
-  await refreshDislikesPanel();
-}
-
-function renderAllDays() {
-  const main = document.getElementById('main-content');
-  main.innerHTML = '';
-
-  const totalDays = Object.keys(PLAN).length;
-  for (let d = 1; d <= totalDays; d++) {
-    const el = document.createElement('div');
-    el.id = `day-${d}`;
-    el.className = 'tab-panel';
-    el.innerHTML = renderDay(d);
-    main.appendChild(el);
-  }
-}
-
-function renderDay(dayNum) {
-  const day = PLAN[dayNum];
-  if (!day) return '';
-
-  let html = `
-    <div class="day-hdr">
-      <span class="day-label">День ${dayNum}</span>
-      <h2 class="day-title">${day.title}</h2>
-    </div>
-  `;
-
-  if (day.prep) {
-    html += `
-      <div class="prep-box">
-        <span class="prep-icon">🔪</span>
-        <div><strong>Prep сьогодні:</strong> ${day.prep}</div>
-      </div>
-    `;
-  }
-
-  html += '<div class="meals-grid">';
-
-  for (const meal of day.meals) {
-    const current = getEffectiveMeal(meal, AppState.replacedMeals);
-    const isReplaced = !!AppState.replacedMeals[meal.id];
-
-    html += `
-      <div class="meal-card ${meal.type === 'snack' ? 'snack-card' : ''} ${isReplaced ? 'replaced' : ''}" id="card-${meal.id}">
-        <div class="meal-bar ${meal.type}"></div>
-        <div class="meal-head">
-          <div class="meal-type-tag">${current.icon} ${lbl(meal.type)}</div>
-          <div class="meal-name">${current.name}</div>
-        </div>
-
-        <div class="portions" id="por-${meal.id}">
-          <div class="portion her">
-            <span class="p-who">👩 Альона</span>
-            <span class="p-text">${current.her}</span>
-          </div>
-          <div class="portion him">
-            <span class="p-who">👨 Діма</span>
-            <span class="p-text">${current.him}</span>
-          </div>
-        </div>
-
-        <div class="generating" id="gen-${meal.id}">
-          <div class="gen-spin"></div>
-          <div class="gen-label">AI шукає заміну…</div>
-        </div>
-
-        <div class="meal-foot">
-          <button class="dislike-btn" id="dbtn-${meal.id}" onclick="dislikeMeal('${meal.id}', ${dayNum})">
-            ${isReplaced ? '👎 Замінити ще' : '👎 Не подобається'}
-          </button>
-          <span class="replaced-badge">✨ Замінено</span>
-        </div>
-      </div>
-    `;
-  }
-
-  html += '</div>';
-  html += renderKBJV(dayNum);
-
-  return html;
-}
-
-function renderKBJV(dayNum) {
-  const day = PLAN[dayNum];
-  const totals = calculateDayTotals(day, AppState.replacedMeals);
-
-  const herTotals = totals.her;
-  const himTotals = totals.him;
-
-  const herTarget = PROFILES.her;
-  const himTarget = PROFILES.him;
-
-  const delta = (value, target) => {
-    const p = Math.round(((value - target) / target) * 100);
-    if (Math.abs(p) <= 8) return '<span class="d-ok">✓</span>';
-    return p > 8
-      ? `<span class="d-over">+${p}%</span>`
-      : `<span class="d-low">${p}%</span>`;
+function getParamsFromForm() {
+  return {
+    days: 7,
+    people: {
+      adults: Number(els.adultsInput.value || 2),
+      children: Number(els.childrenInput.value || 0),
+    },
+    targets: {
+      adult1: {
+        calories: Number(els.caloriesAdult1Input.value || 1900),
+        protein: Number(els.proteinAdult1Input.value || 100),
+      },
+      adult2: {
+        calories: Number(els.caloriesAdult2Input.value || 2700),
+        protein: Number(els.proteinAdult2Input.value || 190),
+      },
+    },
+    constraints: {
+      dislikes: splitCsv(els.dislikesInput.value),
+      preferred_carbs: splitCsv(els.carbsInput.value),
+    },
+    notes: els.notesInput.value.trim(),
   };
+}
+
+function splitCsv(value) {
+  return String(value || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+function setStatus(message, type = '') {
+  els.status.textContent = message;
+  els.status.className = `status ${type}`.trim();
+}
+
+function setLoading(isLoading) {
+  document.body.classList.toggle('loading', isLoading);
+  els.generateBtn.disabled = isLoading;
+  els.resetBtn.disabled = isLoading;
+}
+
+function getEffectiveMeal(baseMeal) {
+  return AppState.replacedMeals[baseMeal.meal_id] || baseMeal;
+}
+
+function getAllMealNames(plan) {
+  const names = [];
+  for (const day of plan.days) {
+    for (const meal of day.meals) {
+      names.push(getEffectiveMeal(meal).name);
+    }
+  }
+  return names;
+}
+
+function renderAll() {
+  renderPlan();
+  renderShopping();
+}
+
+function renderPlan() {
+  const plan = AppState.plan;
+  if (!plan?.days?.length) {
+    els.daysRoot.innerHTML = '<div class="empty">План ще не згенеровано.</div>';
+    return;
+  }
+
+  els.daysRoot.innerHTML = plan.days.map((day) => renderDay(day)).join('');
+
+  els.daysRoot.querySelectorAll('[data-replace-id]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const mealId = button.getAttribute('data-replace-id');
+      await handleReplaceMeal(mealId);
+    });
+  });
+}
+
+function renderDay(day) {
+  const mealHtml = day.meals
+    .map((baseMeal) => renderMeal(getEffectiveMeal(baseMeal), Boolean(AppState.replacedMeals[baseMeal.meal_id])))
+    .join('');
 
   return `
-    <div class="kbjv-wrap" id="kbjv-${dayNum}">
-      <div class="kbjv-scroll">
-        <div class="kbjv-table">
-          <div class="kbjv-hdr">
-            <div>Прийом</div>
-            <div>ккал</div>
-            <div>Білок</div>
-            <div>Жири</div>
-            <div>Вуглев.</div>
-          </div>
+    <section class="card">
+      <div class="day-title">
+        <h2>День ${day.day}</h2>
+        <div class="tiny">3 страви</div>
+      </div>
+      <div class="meal-list">${mealHtml}</div>
+    </section>
+  `;
+}
 
-          ${day.meals.map((meal) => {
-            const current = getEffectiveMeal(meal, AppState.replacedMeals);
-            const k = current.kbjv || meal.kbjv;
+function renderMeal(meal, isReplaced) {
+  const macros = meal.macros_per_serving;
+  const ingredients = meal.ingredients.map((item) => `<li>${escapeHtml(item.name)} — ${item.amount} ${item.unit}</li>`).join('');
+  const recipe = meal.recipe.map((step) => `<li>${escapeHtml(step)}</li>`).join('');
 
-            return `
-              <div class="kbjv-row">
-                <div class="kbjv-lbl">${current.icon} ${lbl(meal.type)}</div>
-                <div class="kbjv-val">${k.her[0]}/${k.him[0]}</div>
-                <div class="kbjv-val p">${k.her[1]}/${k.him[1]}</div>
-                <div class="kbjv-val f">${k.her[2]}/${k.him[2]}</div>
-                <div class="kbjv-val c">${k.her[3]}/${k.him[3]}</div>
-              </div>
-            `;
-          }).join('')}
-
-          <div class="kbjv-row her-row">
-            <div class="kbjv-lbl">👩 Альона</div>
-            <div class="kbjv-val">${herTotals[0]}</div>
-            <div class="kbjv-val p">${herTotals[1]}</div>
-            <div class="kbjv-val f">${herTotals[2]}</div>
-            <div class="kbjv-val c">${herTotals[3]}</div>
-          </div>
-
-          <div class="kbjv-row him-row">
-            <div class="kbjv-lbl">👨 Діма</div>
-            <div class="kbjv-val">${himTotals[0]}</div>
-            <div class="kbjv-val p">${himTotals[1]}</div>
-            <div class="kbjv-val f">${himTotals[2]}</div>
-            <div class="kbjv-val c">${himTotals[3]}</div>
-          </div>
-
-          <div class="kbjv-row tgt-row">
-            <div class="kbjv-lbl">🎯 Ціль А</div>
-            <div class="kbjv-val">${delta(herTotals[0], herTarget.kcal)}</div>
-            <div class="kbjv-val">${delta(herTotals[1], herTarget.p)}</div>
-            <div class="kbjv-val">${delta(herTotals[2], herTarget.f)}</div>
-            <div class="kbjv-val">${delta(herTotals[3], herTarget.c)}</div>
-          </div>
-
-          <div class="kbjv-row tgt-row">
-            <div class="kbjv-lbl">🎯 Ціль Д</div>
-            <div class="kbjv-val">${delta(himTotals[0], himTarget.kcal)}</div>
-            <div class="kbjv-val">${delta(himTotals[1], himTarget.p)}</div>
-            <div class="kbjv-val">${delta(himTotals[2], himTarget.f)}</div>
-            <div class="kbjv-val">${delta(himTotals[3], himTarget.c)}</div>
+  return `
+    <article class="meal">
+      <div class="meal-top">
+        <div>
+          <div class="meal-type">${escapeHtml(meal.type)}</div>
+          <h3>${escapeHtml(meal.name)}</h3>
+          <div>
+            ${meal.kid_friendly ? '<span class="pill">kid-friendly</span>' : ''}
+            ${isReplaced ? '<span class="pill">replaced</span>' : ''}
+            <span class="pill">${meal.prep_time_min} хв</span>
           </div>
         </div>
+        <button class="secondary" data-replace-id="${escapeHtml(meal.meal_id)}">Замінити</button>
       </div>
+      <div class="macros">
+        <span class="macro">${macros.calories} kcal</span>
+        <span class="macro">P ${macros.protein} g</span>
+        <span class="macro">F ${macros.fat} g</span>
+        <span class="macro">C ${macros.carbs} g</span>
+        <span class="macro">${meal.servings} servings</span>
+      </div>
+      <ul class="ingredients">${ingredients}</ul>
+      <ol class="recipe">${recipe}</ol>
+    </article>
+  `;
+}
 
-      <div class="kbjv-foot">
-        Альона: 1750 ккал / Б118 / Ж63 / В187 · Діма: 2450 ккал / Б180 / Ж75 / В270
-      </div>
+function renderShopping() {
+  const plan = AppState.plan;
+  if (!plan?.days?.length) {
+    els.shoppingRoot.innerHTML = 'Згенеруй меню, щоб побачити список покупок.';
+    return;
+  }
+
+  const shopping = buildShoppingList(plan, AppState.replacedMeals);
+  const groups = Object.entries(shopping);
+
+  if (!groups.length) {
+    els.shoppingRoot.innerHTML = 'Немає даних для shopping list.';
+    return;
+  }
+
+  els.shoppingRoot.innerHTML = groups.map(([groupName, items]) => `
+    <div class="shopping-group">
+      <h4>${escapeHtml(groupName)}</h4>
+      <ul>
+        ${items.map((item) => `<li>${escapeHtml(item.name)} — ${item.amount} ${item.unit}</li>`).join('')}
+      </ul>
     </div>
-  `;
+  `).join('');
 }
 
-function switchDay(dayNum) {
-  AppState.currentDay = dayNum;
-
-  document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-
-  document.getElementById(`day-${dayNum}`)?.classList.add('active');
-
-  const tabs = document.querySelectorAll('.tab-btn');
-  if (tabs[dayNum - 1]) {
-    tabs[dayNum - 1].classList.add('active');
-    tabs[dayNum - 1].scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center'
-    });
-  }
-}
-
-async function refreshDislikesPanel() {
-  const list = await loadDislikes();
-  const panel = document.getElementById('dislikes-list');
-  const badge = document.getElementById('dislikes-badge');
-
-  if (!panel || !badge) return;
-
-  badge.textContent = list.length || '';
-  badge.style.display = list.length ? 'inline-block' : 'none';
-
-  if (!list.length) {
-    panel.innerHTML = '<div class="dl-empty">Поки жодної відмови 👍</div>';
-    return;
-  }
-
-  const byWho = { her: [], him: [] };
-  list.forEach((d) => {
-    (byWho[d.who] ??= []).push(d);
-  });
-
-  const groupHtml = (who, items) => {
-    if (!items?.length) return '';
-    return `
-      <div class="dl-group">
-        <div class="dl-group-lbl">${PROFILES[who].emoji} ${PROFILES[who].name}</div>
-        ${items.map((d) => `
-          <div class="dl-item">
-            <span class="dl-type-tag">${lbl(d.type)}</span>
-            <span class="dl-item-name">${d.name}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  };
-
-  panel.innerHTML = `
-    ${groupHtml('her', byWho.her)}
-    ${groupHtml('him', byWho.him)}
-    <button class="dl-clear-btn" onclick="clearDislikes()">🗑️ Очистити все</button>
-  `;
-}
-
-async function clearDislikes() {
-  await clearDislikesData();
-  showToast('🗑️ Список відхилених очищено');
-  await refreshDislikesPanel();
-}
-
-async function dislikeMeal(mealId, dayNum) {
-  if (busyMeals.has(mealId)) return;
-  busyMeals.add(mealId);
-
-  const btn = document.getElementById(`dbtn-${mealId}`);
-  const gen = document.getElementById(`gen-${mealId}`);
-  const card = document.getElementById(`card-${mealId}`);
-  const por = document.getElementById(`por-${mealId}`);
-  const meal = PLAN[dayNum]?.meals.find((m) => m.id === mealId);
-
-  if (!meal || !btn || !gen || !card || !por) {
-    busyMeals.delete(mealId);
-    return;
-  }
-
-  const current = getEffectiveMeal(meal, AppState.replacedMeals);
-
-  btn.disabled = true;
-  por.style.display = 'none';
-  gen.classList.add('active');
-
+async function handleGenerate() {
   try {
-    await addDislike(current.name, meal.type, AppState.who);
-    await refreshDislikesPanel();
-
-    const newMeal = await generateReplacement(current, meal, dayNum, AppState.replacedMeals);
-
-    await upsertReplacedMeal(mealId, newMeal);
-    AppState.replacedMeals[mealId] = newMeal;
-
-    card.querySelector('.meal-name').textContent = newMeal.name;
-    card.querySelector('.meal-type-tag').textContent = `${newMeal.icon} ${lbl(meal.type)}`;
-    por.innerHTML = `
-      <div class="portion her">
-        <span class="p-who">👩 Альона</span>
-        <span class="p-text">${newMeal.her}</span>
-      </div>
-      <div class="portion him">
-        <span class="p-who">👨 Діма</span>
-        <span class="p-text">${newMeal.him}</span>
-      </div>
-    `;
-
-    por.style.display = 'flex';
-    gen.classList.remove('active');
-    card.classList.add('replaced');
-    btn.innerHTML = '👎 Замінити ще';
-    btn.disabled = false;
-
-    const panel = document.getElementById(`day-${dayNum}`);
-    const old = panel?.querySelector('.kbjv-wrap');
-    const tmp = document.createElement('div');
-    tmp.innerHTML = renderKBJV(dayNum);
-
-    if (old) old.replaceWith(tmp.firstElementChild);
-    else if (panel) panel.appendChild(tmp.firstElementChild);
-
-    showToast('✨ Страву замінено!');
-  } catch (e) {
-    gen.classList.remove('active');
-    por.style.display = 'flex';
-    btn.disabled = false;
-    console.error(e);
-    showToast(`❌ ${e.message}`);
+    setLoading(true);
+    setStatus('Генерація меню...', '');
+    const params = getParamsFromForm();
+    const plan = await generateMenuPlan(params);
+    savePlan(plan, params);
+    renderAll();
+    setStatus('Меню згенеровано.', 'ok');
+  } catch (error) {
+    console.error(error);
+    setStatus(error.message || 'Не вдалося згенерувати меню.', 'error');
   } finally {
-    busyMeals.delete(mealId);
+    setLoading(false);
   }
 }
 
-async function openGenPlanScreen() {
-  document.getElementById('gen-screen').classList.add('active');
-  document.getElementById('gp-progress').classList.remove('active');
-  document.getElementById('gp-start-btn').disabled = false;
-  document.getElementById('gp-cancel-btn').style.display = 'block';
+async function handleReplaceMeal(mealId) {
+  try {
+    if (!AppState.plan) return;
+    setLoading(true);
+    setStatus(`Заміна ${mealId}...`, '');
 
-  const dl = await loadDislikes();
-  const prev = document.getElementById('gp-dislikes-preview');
+    const { dayObj, baseMeal } = findMealById(mealId);
+    if (!dayObj || !baseMeal) throw new Error(`Meal not found: ${mealId}`);
 
-  if (!dl.length) {
-    prev.innerHTML = '<div class="gen-empty">Немає відхилених — план буде різноманітним</div>';
-    return;
-  }
+    const replacement = await replaceMealWithAI({
+      mealId,
+      mealType: baseMeal.type,
+      dayIndex: dayObj.day,
+      params: AppState.params || getParamsFromForm(),
+      existingDayMeals: dayObj.meals.map((meal) => getEffectiveMeal(meal)),
+      allMealNames: getAllMealNames(AppState.plan),
+    });
 
-  prev.innerHTML = `
-    <div class="gen-tags">
-      ${dl.map((d) => `<span class="gen-tag">${d.who === 'her' ? '👩' : '👨'} ${d.name}</span>`).join('')}
-    </div>
-  `;
-}
+    // Preserve the user's existing persistence rule.
+    await upsertReplacedMeal(mealId, replacement);
+    AppState.replacedMeals[mealId] = replacement;
+    saveLocalReplacedMeals(AppState.replacedMeals);
 
-function closeGenPlanScreen() {
-  document.getElementById('gen-screen').classList.remove('active');
-}
-
-function setStep(n) {
-  for (let i = 1; i <= 4; i++) {
-    document.getElementById(`gps-${i}`).className =
-      'gen-step' + (i < n ? ' done' : i === n ? ' active' : '');
-  }
-}
-
-function applyNewPlan(arr) {
-  const np = normalizePlan(arr);
-
-  Object.keys(PLAN).forEach((k) => delete PLAN[k]);
-  Object.assign(PLAN, np);
-
-  Object.keys(AppState.replacedMeals).forEach((k) => delete AppState.replacedMeals[k]);
-
-  renderAllDays();
-  switchDay(1);
-
-  const p = PROFILES[AppState.who];
-  if (p) {
-    document.getElementById('hdr-meta').textContent = `${Object.keys(PLAN).length} днів · Краків · ${p.name}`;
+    renderAll();
+    setStatus(`Страву ${mealId} замінено.`, 'ok');
+  } catch (error) {
+    console.error(error);
+    setStatus(error.message || 'Не вдалося замінити страву.', 'error');
+  } finally {
+    setLoading(false);
   }
 }
 
-async function runGeneration() {
-  const btn = document.getElementById('gp-start-btn');
-  const cancel = document.getElementById('gp-cancel-btn');
-  const progress = document.getElementById('gp-progress');
-  const txt = document.getElementById('gp-prog-txt');
+function findMealById(mealId) {
+  for (const dayObj of AppState.plan.days) {
+    for (const baseMeal of dayObj.meals) {
+      if (baseMeal.meal_id === mealId) return { dayObj, baseMeal };
+    }
+  }
+  return {};
+}
 
-  btn.disabled = true;
-  cancel.style.display = 'none';
-  progress.classList.add('active');
+async function hydrateFromStorage() {
+  loadPlan();
+  loadLocalReplacedMeals();
 
   try {
-    setStep(1);
-    txt.textContent = 'Завантажую список відмов…';
-
-    const dl = await loadDislikes();
-    const hD = dl.filter((d) => d.who === 'her').map((d) => d.name);
-    const himD = dl.filter((d) => d.who === 'him').map((d) => d.name);
-
-    const opts = {
-      variety: document.getElementById('gp-variety').checked,
-      seasonal: document.getElementById('gp-seasonal').checked,
-      budget: document.getElementById('gp-budget').checked
-    };
-
-    setStep(2);
-    txt.textContent = 'AI генерує страви…';
-
-    let plan;
-    try {
-      const prompt = buildGenPrompt(hD, himD, opts);
-      const raw = await withRetry(() => callClaude(prompt, 2800), 2);
-      console.log('RAW PLAN RESPONSE:', raw);
-
-      setStep(3);
-      txt.textContent = 'Перевіряю структуру…';
-
-      plan = parseGeneratedPlan(raw);
-      console.log('PARSED PLAN:', plan);
-    } catch (aiErr) {
-      console.error('AI generation failed, fallback used:', aiErr);
-      setStep(3);
-      txt.textContent = 'AI зламався, застосовую fallback…';
-      plan = getFallbackGeneratedPlan();
+    const remoteReplaced = await fetchReplacedMeals();
+    if (remoteReplaced && Object.keys(remoteReplaced).length) {
+      AppState.replacedMeals = { ...AppState.replacedMeals, ...remoteReplaced };
+      saveLocalReplacedMeals(AppState.replacedMeals);
     }
-
-    setStep(4);
-    txt.textContent = 'Застосовую новий план…';
-
-    await clearReplacedMeals();
-    AppState.replacedMeals = {};
-    applyNewPlan(plan);
-
-    closeGenPlanScreen();
-    switchDay(1);
-    showToast('✨ Новий план готовий!');
-  } catch (e) {
-    console.error('runGeneration error:', e);
-    progress.classList.remove('active');
-    btn.disabled = false;
-    cancel.style.display = 'block';
-    showToast(`❌ ${e.message}`);
+  } catch (error) {
+    console.warn('Supabase replaced meals were not loaded:', error.message);
   }
+
+  renderAll();
 }
 
-function toggleDislikesPanel() {
-  const wrap = document.getElementById('dislikes-panel-wrap');
-  const overlay = document.getElementById('panel-overlay');
-  const isOpen = wrap.classList.contains('open');
-
-  wrap.classList.toggle('open', !isOpen);
-  overlay.classList.toggle('active', !isOpen);
-
-  if (!isOpen) {
-    refreshDislikesPanel();
-  }
+function resetReplacements() {
+  clearReplacedMeals();
+  renderAll();
+  setStatus('Локальні заміни очищено. Дані в Supabase не видалялися.', 'ok');
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-  const saved = localStorage.getItem('meal-who');
-  if (saved && PROFILES[saved]) {
-    AppState.who = saved;
-    show('app');
-    hide('setup-screen');
-    await initApp();
-  }
-});
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
 
-window.selectWho = selectWho;
-window.startApp = startApp;
-window.resetWho = resetWho;
-window.toggleDislikesPanel = toggleDislikesPanel;
-window.openGenPlanScreen = openGenPlanScreen;
-window.closeGenPlanScreen = closeGenPlanScreen;
-window.runGeneration = runGeneration;
-window.dislikeMeal = dislikeMeal;
-window.clearDislikes = clearDislikes;
+els.generateBtn.addEventListener('click', handleGenerate);
+els.resetBtn.addEventListener('click', resetReplacements);
+
+hydrateFromStorage();
