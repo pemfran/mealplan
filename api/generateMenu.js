@@ -3,19 +3,32 @@ import { buildMenuPromptPayload } from "./prompts.js";
 import { validateMenu } from "../core/validate.js";
 import { normalizeMenu } from "../core/normalize.js";
 
-export async function generateMenu(input) {
-  const payload = buildMenuPromptPayload(input);
-  const parsed = await callOpenAI({
-    action: "generate_menu",
-    payload,
-  });
+export async function generateMenu(payload) {
+  try {
+    const response = await fetch('./api/generate-menu', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-  validateMenu(parsed);
-  return normalizeMenu(parsed);
-} catch (error) {
-      lastError = error;
+    const text = await response.text();
+
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error('Invalid JSON response from server');
     }
-  }
 
-  throw lastError || new Error('Failed to generate menu');
+    if (!response.ok) {
+      throw new Error(data?.error || `HTTP ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('generateMenu failed:', error);
+    throw error;
+  }
 }
