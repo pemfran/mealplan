@@ -1,4 +1,10 @@
-export function buildShoppingList(days = []) {
+export function buildShoppingList(input) {
+  const days = Array.isArray(input)
+    ? input
+    : Array.isArray(input?.days)
+      ? input.days
+      : [];
+
   const totals = new Map();
 
   for (const day of days) {
@@ -22,11 +28,7 @@ export function buildShoppingList(days = []) {
         const key = `${name.toLowerCase()}__${unit}`;
 
         if (!totals.has(key)) {
-          totals.set(key, {
-            name,
-            unit,
-            amount: 0,
-          });
+          totals.set(key, { name, unit, amount: 0 });
         }
 
         totals.get(key).amount += amount;
@@ -36,11 +38,10 @@ export function buildShoppingList(days = []) {
 
   return Array.from(totals.values())
     .sort((a, b) => a.name.localeCompare(b.name, 'uk'))
-    .map(item => ({
+    .map((item) => ({
       ...item,
-      amount:
-        item.unit === 'pcs'
-          ? Math.round(item.amount * 10) / 10
-          : Math.round(item.amount),
+      amount: item.unit === 'pcs'
+        ? Math.round(item.amount * 10) / 10
+        : Math.round(item.amount),
     }));
 }
