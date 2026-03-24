@@ -1,90 +1,46 @@
-const CATEGORY_MAP = {
-  'chicken breast': 'Protein',
-  egg: 'Protein',
-  salmon: 'Protein',
-  shrimp: 'Protein',
-  turkey: 'Protein',
-  beef: 'Protein',
-  greek_yogurt: 'Dairy',
-  cottage_cheese: 'Dairy',
-  milk: 'Dairy',
-  cheese: 'Dairy',
-  rice: 'Carbs',
-  buckwheat: 'Carbs',
-  bulgur: 'Carbs',
-  pasta: 'Carbs',
-  potato: 'Carbs',
-  tomato: 'Vegetables',
-  cucumber: 'Vegetables',
-  carrot: 'Vegetables',
-  zucchini: 'Vegetables',
-  broccoli: 'Vegetables',
-  banana: 'Fruit',
-  apple: 'Fruit',
-  berries: 'Fruit',
-  olive_oil: 'Pantry',
-  flour: 'Pantry',
-  garlic: 'Pantry',
-  onion: 'Pantry',
-};
+export function buildShoppingList(days = []) {
+  const totals = new Map();
 
-function categoryForName(name) {
-  const key = name.replace(/\s+/g, '_');
-  return CATEGORY_MAP[key] || 'Other';
-}
+  for (const day of days) {
+    const meals = [
+      day?.breakfast,
+      day?.lunch,
+      day?.dinner,
+      day?.snack,
+    ].filter(Boolean);
 
-export function buildShoppingList(plan, replacedMeals = {}) {
-  if (!plan?.days?.length) return {};
+    for (const meal of meals) {
+      const ingredients = Array.isArray(meal?.ingredients) ? meal.ingredients : [];
 
-  const aggregate = {};
-  const finalMeals = [];
+      for (const item of ingredients) {
+        const name = String(item?.name || '').trim();
+        const unit = String(item?.unit || 'g').trim();
+        const amount = Number(item?.amount || 0);
 
-  for (const day of plan.days) {
-    for (const baseMeal of day.meals) {
-      const meal = replacedMeals[baseMeal.meal_id] || baseMeal;
-      finalMeals.push(meal);
-    }
-  }
+        if (!name || !amount) continue;
 
-  for (const meal of finalMeals) {
-    for (const ingredient of meal.ingredients) {
+        const key = `${name.toLowerCase()}__${unit}`;
 
-      const name = ingredient.name.trim().toLowerCase();
-      const unit = (ingredient.unit || 'pcs').trim().toLowerCase();
+        if (!totals.has(key)) {
+          totals.set(key, {
+            name,
+            unit,
+            amount: 0,
+          });
+        }
 
-      const key = `${name}__${unit}`;
-
-      if (!aggregate[key]) {
-        aggregate[key] = {
-          name,
-          unit,
-          amount: 0,
-          category: categoryForName(name),
-        };
+        totals.get(key).amount += amount;
       }
-
-      aggregate[key].amount += Number(ingredient.amount) || 0;
     }
   }
 
-  const groups = {};
-
-  for (const item of Object.values(aggregate)) {
-    const category = item.category;
-
-    if (!groups[category]) groups[category] = [];
-
-    groups[category].push({
+  return Array.from(totals.values())
+    .sort((a, b) => a.name.localeCompare(b.name, 'uk'))
+    .map(item => ({
       ...item,
-      amount: Math.round(item.amount * 10) / 10,
-    });
-  }
-
-  for (const arr of Object.values(groups)) {
-    arr.sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  return Object.fromEntries(
-    Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-  );
+      amount:
+        item.unit === 'pcs'
+          ? Math.round(item.amount * 10) / 10
+          : Math.round(item.amount),
+    }));
 }
