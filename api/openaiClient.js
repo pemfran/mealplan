@@ -1,11 +1,6 @@
 import { CONFIG } from '../config.js';
-import { safeJsonParse } from '../utils/json.js';
 
-function isConfigured() {
-  return Boolean(CONFIG.OPENAI_API_KEY && !CONFIG.OPENAI_API_KEY.includes('PASTE_'));
-}
-
-function withTimeout(promise, ms) {
+function withTimeout(ms) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
 
@@ -15,41 +10,43 @@ function withTimeout(promise, ms) {
   };
 }
 
-export async function callOpenAI({ systemPrompt, userPrompt }) {
-  if (!isConfigured()) {
-    throw new Error('OpenAI API key is missing in config.js');
+export async function callOpenAI({ action, payload }) {
+  if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
+    throw new Error('Supabase config is missing in config.js');
   }
 
-  const timeout = withTimeout(null, CONFIG.REQUEST_TIMEOUT_MS);
+  const timeout = withTimeout(CONFIG.REQUEST_TIMEOUT_MS);
 
   try {
-    const res = await fetch(CONFIG.OPENAI_API_URL, {
+    const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/ai-menu`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${CONFIG.OPENAI_API_KEY}`,
+        apikey: CONFIG.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${CONFIG.SUPABASE_ANON_KEY}`,
       },
       signal: timeout.signal,
       body: JSON.stringify({
-        model: CONFIG.OPENAI_MODEL,
-        temperature: CONFIG.OPENAI_TEMPERATURE,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
+        action,
+        payload,
       }),
     });
 
+    const data = await res.json();
+
     if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`OpenAI request failed: ${res.status} ${text}`);
+      throw new Error(
+        data?.error
+          ? `Edge Function failed: ${JSON.stringify(data.error)}`
+          : `Edge Function failed with status ${res.status}`
+      );
     }
 
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) throw new Error('OpenAI returned empty content');
-    return safeJsonParse(content);
+    if (!data?.content) {
+      throw new Error('Edge Function returned empty content');
+    }
+
+    return JSON.parse(data.content);
   } finally {
     timeout.cleanup();
   }
