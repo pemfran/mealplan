@@ -1,19 +1,18 @@
 import { callOpenAI } from "./openaiClient.js";
-import { menuPrompt } from "./prompts.js";
+import { buildMenuPromptPayload } from "./prompts.js";
 import { validateMenu } from "../core/validate.js";
 import { normalizeMenu } from "../core/normalize.js";
 
-export async function generateMenuPlan(params) {
-  const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildMenuUserPrompt(params);
+export async function generateMenu(input) {
+  const payload = buildMenuPromptPayload(input);
+  const parsed = await callOpenAI({
+    action: "generate_menu",
+    payload,
+  });
 
-  let lastError = null;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    try {
-      const parsed = await callOpenAI({ systemPrompt, userPrompt });
-      validatePlan(parsed);
-      return normalizePlan(parsed);
-    } catch (error) {
+  validateMenu(parsed);
+  return normalizeMenu(parsed);
+} catch (error) {
       lastError = error;
     }
   }
