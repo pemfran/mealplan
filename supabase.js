@@ -1,7 +1,7 @@
 import { CONFIG } from './config.js';
 
 function hasSupabaseConfig() {
-  return Boolean(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && !CONFIG.SUPABASE_URL.includes('PASTE_') && !CONFIG.SUPABASE_ANON_KEY.includes('PASTE_'));
+  return Boolean(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && !CONFIG.SUPABASE_URL.includes('https://rkacfuljpkjtehjkmqyc.supabase.co') && !CONFIG.SUPABASE_ANON_KEY.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrYWNmdWxqcGtqdGVoamttcXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg4OTIsImV4cCI6MjA4OTgyNDg5Mn0.ydkfhtpCdidcIIc5Qaq9ZIuYaOulOEL9AjwLSSOy8Kc'));
 }
 
 function getHeaders() {
