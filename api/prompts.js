@@ -1,28 +1,27 @@
 import { stringifyPretty } from '../utils/json.js';
 
-export function buildSystemPrompt() {
-  return [
-    'You are a meal-planning engine.',
-    'Return only valid JSON.',
-    'Do not include markdown, explanations, headings, comments, code fences, or any text outside JSON.',
-    'Generate practical family meals with realistic ingredients and realistic macro estimates.',
-    'Use supermarket-friendly ingredients and home-cooking recipes.',
-    'Breakfasts and dinners must be kid-friendly.',
-    'Avoid repeating the same meal name within the same 7-day plan.',
-    'Do not suggest breakfast-style meals for dinner.',
-    'All ingredient amounts must be numeric.',
-    'Allowed ingredient units only: g, ml, pcs.',
-    'Macros must be per serving and numeric.',
-    'Recipe must be an array of short steps.',
-    'Use exactly the requested meal_id values. Never invent a different format.',
-  ].join(' ');
+export function buildMenuPromptPayload(input) {
+  return {
+    days: 7,
+    adults: input.adults,
+    children: input.children,
+    calorieTarget: input.calorieTarget,
+    proteinTarget: input.proteinTarget,
+    constraints: input.constraints,
+    preferences: input.preferences,
+  };
 }
 
-export function buildMenuUserPrompt(params) {
-  const mealIds = [];
-  for (let day = 1; day <= 7; day += 1) {
-    mealIds.push(`day${day}_breakfast`, `day${day}_lunch`, `day${day}_dinner`);
-  }
+export function buildReplaceMealPayload(input) {
+  return {
+    meal_id: input.meal_id,
+    type: input.type,
+    day: input.day,
+    currentMealName: input.currentMealName,
+    constraints: input.constraints,
+    existingDayMeals: input.existingDayMeals,
+  };
+}
 
   const schema = {
     days: [
