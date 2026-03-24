@@ -1,7 +1,7 @@
 import { callOpenAI } from "./openaiClient.js";
 import { menuPrompt } from "./prompts.js";
-import { validateMenu } from "../validate.js";
-import { normalizeMenu } from "../normalize.js";
+import { validateMenu } from "../core/validate.js";
+import { normalizeMenu } from "../core/normalize.js";
 
 export async function generateMenuPlan(params) {
   const systemPrompt = buildSystemPrompt();
