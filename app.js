@@ -101,50 +101,53 @@ function renderPlan() {
 }
 
 function renderDay(day) {
-  const mealHtml = day.meals
-    .map((baseMeal) => renderMeal(getEffectiveMeal(baseMeal), Boolean(AppState.replacedMeals[baseMeal.meal_id])))
-    .join('');
+  const breakfast = day?.breakfast || {};
+  const lunch = day?.lunch || {};
+  const dinner = day?.dinner || {};
+  const snack = day?.snack || {};
 
-  return `
-    <section class="card">
-      <div class="day-title">
-        <h2>День ${day.day}</h2>
-        <div class="tiny">3 страви</div>
-      </div>
-      <div class="meal-list">${mealHtml}</div>
-    </section>
-  `;
-}
+  function renderMeal(meal, label) {
+    const ingredients = Array.isArray(meal?.ingredients) ? meal.ingredients : [];
+    const recipe = Array.isArray(meal?.recipe) ? meal.recipe : [];
 
-function renderMeal(meal, isReplaced) {
-  const macros = meal.macros_per_serving;
-  const ingredients = meal.ingredients.map((item) => `<li>${escapeHtml(item.name)} — ${item.amount} ${item.unit}</li>`).join('');
-  const recipe = meal.recipe.map((step) => `<li>${escapeHtml(step)}</li>`).join('');
+    return `
+      <div class="meal-card">
+        <h3>${label}: ${meal?.title || 'Без назви'}</h3>
+        <p>${meal?.description || ''}</p>
+        <p>
+          Ккал: ${meal?.kcal ?? 0} |
+          Б: ${meal?.protein ?? 0} |
+          Ж: ${meal?.fat ?? 0} |
+          В: ${meal?.carbs ?? 0}
+        </p>
 
-  return `
-    <article class="meal">
-      <div class="meal-top">
         <div>
-          <div class="meal-type">${escapeHtml(meal.type)}</div>
-          <h3>${escapeHtml(meal.name)}</h3>
-          <div>
-            ${meal.kid_friendly ? '<span class="pill">kid-friendly</span>' : ''}
-            ${isReplaced ? '<span class="pill">replaced</span>' : ''}
-            <span class="pill">${meal.prep_time_min} хв</span>
-          </div>
+          <strong>Інгредієнти:</strong>
+          <ul>
+            ${ingredients.map(i => `
+              <li>${i?.name || ''} — ${i?.amount ?? 0} ${i?.unit || ''}</li>
+            `).join('')}
+          </ul>
         </div>
-        <button class="secondary" data-replace-id="${escapeHtml(meal.meal_id)}">Замінити</button>
+
+        <div>
+          <strong>Рецепт:</strong>
+          <ol>
+            ${recipe.map(step => `<li>${step || ''}</li>`).join('')}
+          </ol>
+        </div>
       </div>
-      <div class="macros">
-        <span class="macro">${macros.calories} kcal</span>
-        <span class="macro">P ${macros.protein} g</span>
-        <span class="macro">F ${macros.fat} g</span>
-        <span class="macro">C ${macros.carbs} g</span>
-        <span class="macro">${meal.servings} servings</span>
-      </div>
-      <ul class="ingredients">${ingredients}</ul>
-      <ol class="recipe">${recipe}</ol>
-    </article>
+    `;
+  }
+
+  return `
+    <section class="day-card">
+      <h2>День ${day?.day ?? ''}</h2>
+      ${renderMeal(breakfast, 'Сніданок')}
+      ${renderMeal(lunch, 'Обід')}
+      ${renderMeal(dinner, 'Вечеря')}
+      ${renderMeal(snack, 'Перекус')}
+    </section>
   `;
 }
 
