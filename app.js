@@ -151,29 +151,29 @@ function renderDay(day) {
   `;
 }
 
-function renderShopping() {
-  const plan = AppState.plan;
-  if (!plan?.days?.length) {
-    els.shoppingRoot.innerHTML = 'Згенеруй меню, щоб побачити список покупок.';
+function renderShopping(plan) {
+  const shoppingRoot = document.getElementById('shopping-list');
+  if (!shoppingRoot) return;
+
+  const items = buildShoppingList(plan);
+
+  if (!Array.isArray(items) || items.length === 0) {
+    shoppingRoot.innerHTML = '<p>Список покупок поки що порожній.</p>';
     return;
   }
 
-  const shopping = buildShoppingList(plan, AppState.replacedMeals);
-  const groups = Object.entries(shopping);
-
-  if (!groups.length) {
-    els.shoppingRoot.innerHTML = 'Немає даних для shopping list.';
-    return;
-  }
-
-  els.shoppingRoot.innerHTML = groups.map(([groupName, items]) => `
-    <div class="shopping-group">
-      <h4>${escapeHtml(groupName)}</h4>
+  shoppingRoot.innerHTML = `
+    <div class="shopping-card">
+      <h2>Список покупок</h2>
       <ul>
-        ${items.map((item) => `<li>${escapeHtml(item.name)} — ${item.amount} ${item.unit}</li>`).join('')}
+        ${items.map(item => `
+          <li>
+            ${item.name} — ${item.amount} ${item.unit}
+          </li>
+        `).join('')}
       </ul>
     </div>
-  `).join('');
+  `;
 }
 
 async function handleGenerate() {
