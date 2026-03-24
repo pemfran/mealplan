@@ -1,4 +1,3 @@
-import { normalizeIngredientName } from "../core/normalize.js";
 
 const CATEGORY_MAP = {
   'chicken breast': 'Protein',
